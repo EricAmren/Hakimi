@@ -30,7 +30,7 @@ class Node:
                 seq[minId] -= 1
             #at least 2 vertex with degree > 0
 
-            self.freeBonds = sum( j for j in seq ) 
+            self.freeBonds = sum( j for j in seq )
 
 class Vertex:
     def __init__(self, index, degree):
@@ -48,7 +48,7 @@ def getMaxFreeBonds(degreeSequence):
 
 def buildParentNode(nodeList):
     """
-    Build parent node by merging  
+    Build parent node by merging
     """
     degreeSequence = []
     freeBonds = 0
@@ -150,7 +150,6 @@ def find_all_graphs(ds):
     #    raise ValueError("first graph isn't connected") #TODO
     if G.is_connected():
         results.add(graph2hash(G))
-    print("something")
     results = rec(stack, results)
     results_graphs =[]
     for hash in results:
@@ -182,7 +181,7 @@ def label2seq(label):
     for degree in str(label):
         degreeSequence.append(int(degree))
     return degreeSequence
-        
+
 
 
 ################################################################################
