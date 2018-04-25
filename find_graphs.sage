@@ -1,23 +1,24 @@
 #load("spectro.sage")
 #sys.setrecursionlimit(20000)
-ds=[3,3,2,2]
-ds=[3,3,2,2,1,1]
-ds=[5,4,2,2,2,1]
-ds=[4,4,3,3,2,1,1]
-ds=[6,4,4,3,3,1,1]
 
 class Node:
     def __init__(self, degreeSequence):
         self.degreeSequence = degreeSequence
-        self.freeBonds = getMaxFreeBonds(self.degreeSequence)
+        # self.freeBonds = getMaxFreeBonds(self.degreeSequence)
+        self.children = []
+        self.freeBonds = self.setFreeBonds()
+        self.parent = None
 
     def __str__(self):
+        return str(self.degreeSequence)
+
+    def __repr__(self):
         return str(self.degreeSequence)
 
     def getNumberOfFreeBonds(self):
         seq = self.degreeSequence
         if len(seq) == 1:
-            self.freeBonds = seq[0]
+            return seq[0]
         else:
             seq.append(1)
             while sum( i > 0 for i in seq ) > 1:
@@ -29,8 +30,57 @@ class Node:
                 seq[maxId] -= 1
                 seq[minId] -= 1
             #at least 2 vertex with degree > 0
+            return sum( j for j in seq )
 
-            self.freeBonds = sum( j for j in seq )
+    def setFreeBonds(self):
+        seq = self.degreeSequence
+        if self.children:    # If self has children
+            childrenFreeBonds = []
+            for child in self.children:
+                childrenFreeBonds.append(child.freeBonds)
+            sumOfFreeBonds = sum(freeBonds for freeBonds in childrenFreeBonds)
+            numberOfChildren = len(self.children)
+            return sumOfFreeBonds - 2 * (numberOfChildren - 1)
+        elif len(seq) == 1:  # If self is leaf
+            # self.freeBonds = seq[0]
+            return seq[0]
+        elif len(seq) == 0:
+            return []
+        else :
+            return self.getNumberOfFreeBonds()
+            # raise ValueError("Invalid degree sequence : leaves can only contain one vertex.")
+
+    def add_children(self, list_of_children):
+        self.children.extend(list_of_children)
+        for child in list_of_children:
+            child.parent = self
+        self.freeBonds = self.setFreeBonds()
+
+    def get_leaves(self):
+        leaves = []
+        leaves = self.rec_get_leaves(leaves)
+        return leaves
+
+    def rec_get_leaves(self, leaves_list):
+        if self.children: # If it's not a leaf
+            for child in self.children:
+                leaves_list.extend(child.get_leaves())
+        else:
+            leaves_list.append(self)
+        return leaves_list
+
+
+
+
+    def fill_in_vertices(self):
+        while self.children:
+            for child in self.children:
+                child.fill_in_vertices()
+
+
+
+
+
 
 class Vertex:
     def __init__(self, index, degree):
@@ -52,17 +102,42 @@ def buildParentNode(nodeList):
     """
     degreeSequence = []
     freeBonds = 0
-    numberOfChildren = 0
-    sum = 0
-    for node in nodeList:
-        degreeSequence.extend(node.degreeSequence)
+    parentNode = Node(degreeSequence)
+    # numberOfChildren = 0
+    # sum = 0
+    for child in nodeList:
+        degreeSequence.extend(child.degreeSequence)
         degreeSequence.sort(reverse=True)
-        numberOfChildren += 1
-        sum += node.freeBonds
+    parentNode.add_children(nodeList)
+    parentNode.degreeSequence = degreeSequence
 
+        # numberOfChildren += 1
+        # sum += node.freeBonds
+
+    # node = Node(degreeSequence)
+    # node.freeBonds = sum - 2 * (numberOfChildren - 1)
+    return parentNode
+
+def buildNodeByFormula(formula_string):
+    formula = list(formula_string.upper())
+    degreeSequence = []
+    for letter in formula:
+        degree = None
+        if letter == 'H':
+            degree = 1
+        elif letter == 'O':
+            degree = 2
+        elif letter == 'N':
+            degree = 3
+        elif letter == 'C':
+            degree = 4
+        if degree == None:
+            raise ValueError("Character in formula not implemented.")
+        degreeSequence.append(degree)
+    degreeSequence.sort(reverse=True)
     node = Node(degreeSequence)
-    node.freeBonds = sum - 2 * (numberOfChildren - 1)
     return node
+
 
 
 
@@ -185,27 +260,64 @@ def label2seq(label):
 
 
 ################################################################################
+#                                   TESTING                                    #
+################################################################################
 
 LRT = LabelledRootedTree
 
-node011 = Node([4,1])
-node012 = Node([3,2])
-node021 = Node([4,2])
-node022 = Node([4,3,1])
-node01 = buildParentNode([node011, node012])
-node02 = buildParentNode([node021, node022])
-node0 = buildParentNode([node01, node02])
+# ds=[3,3,2,2]
+# ds=[3,3,2,2,1,1]
+# ds=[5,4,2,2,2,1]
+# ds=[4,4,3,3,2,1,1]
+# ds=[6,4,4,3,3,1,1]
 
-lrt011 = LRT([], node011)
-lrt012 = LRT([], node012)
-lrt021 = LRT([], node021)
-lrt022 = LRT([], node022)
-lrt01 = LRT((lrt011, lrt012), node01)
-lrt02 = LRT((lrt021, lrt022), node02)
-root = LRT((lrt01, lrt02), node0)
+# node011 = Node([4,1])
+# node012 = Node([3,2])
+# node021 = Node([4,2])
+# node022 = Node([4,3,1])
+# node01 = buildParentNode([node011, node012])
+# node02 = buildParentNode([node021, node022])
+# node0 = buildParentNode([node01, node02])
 
+# lrt011 = LRT([], node011)
+# lrt012 = LRT([], node012)
+# lrt021 = LRT([], node021)
+# lrt022 = LRT([], node022)
+# lrt01 = LRT((lrt011, lrt012), node01)
+# lrt02 = LRT((lrt021, lrt022), node02)
+# root = LRT((lrt01, lrt02), node0)
+
+BNF = buildNodeByFormula
+BPN = buildParentNode
+
+H = BNF("H")
+C = BNF("C")
+N = BNF("N")
+O = BNF("O")
+
+NO = BPN([N,O])
+CH = BPN([C,H])
+CNOH = BPN([NO,CH])
+
+CO = BPN([C,O])
+CNH = BPN([C,N,H])
+CCNOH = BPN([CO,CNH])
+
+root = BPN([CNOH,CCNOH])
+# for child in root.children:
+#     child.freeBonds
+
+
+
+
+
+FAG = find_all_graphs
+FNG = find_neutral_graph
 
 ################################################################################
+#                                  DEPRECATED                                  #
+################################################################################
+
 
 def has_isomorph_old(new_graph, graphs_list):
     """
