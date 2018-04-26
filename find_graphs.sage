@@ -8,6 +8,11 @@ class Node:
         self.children = []
         self.freeBonds = self.setFreeBonds()
         self.parent = None
+        # self.hash = self.build_node_hash()
+        self.hash = None
+        self.vertex = None
+        if len(degreeSequence) == 1:
+            self.build_node_hash()
 
     def __str__(self):
         return str(self.degreeSequence)
@@ -32,6 +37,9 @@ class Node:
             #at least 2 vertex with degree > 0
             return sum( j for j in seq )
 
+    def get_graph(self):
+        return hash2graph(self.hash)
+
     def setFreeBonds(self):
         seq = self.degreeSequence
         if self.children:    # If self has children
@@ -55,6 +63,7 @@ class Node:
         for child in list_of_children:
             child.parent = self
         self.freeBonds = self.setFreeBonds()
+        self.hash = self.build_node_hash()
 
     def get_leaves(self):
         leaves = []
@@ -69,17 +78,48 @@ class Node:
             leaves_list.append(self)
         return leaves_list
 
-
-
-
     def fill_in_vertices(self):
         while self.children:
             for child in self.children:
                 child.fill_in_vertices()
 
+    def build_node_hash(self):
+        if not self.children: #If it's a leaf
+            G = Graph(1, loops=False, multiedges=True)
+            self.hash = graph2hash(G)
+        else:
+            G = Graph(0, loops=False, multiedges=True)
+            for child in self.children:
+                G += child.get_graph()
+
+            self.hash = graph2hash(G)
+        # self.hash = graph2hash(G)
+        self.vertex = Vertex(0, self.freeBonds)
+        # print(self.hash)
+        return self.hash
+
+    def add_virtual_edge(self, node1, node2):
+        if node1.freeBonds < 1 or node2.freeBonds < 1:
+            raise ValueError("No bonds available")
+        if node1 not in self.children or node2 not in self.children:
+            raise ValueError("These nodes aren't of the same level.")
+        leaves1 = node1.get_leaves()
+        leaves2 = node2.get_leaves()
+        leaves1.sort(key=operator.attrgetter('degreeSequence'), reverse=True)
+        leaves2.sort(key=operator.attrgetter('degreeSequence'), reverse=True)
+        max_leaf1 = leaves1[0]
+        max_leaf2 = leaves2[0]
+        # Add an edge between these two leaf in parent graph
+        G = self.get_graph().add_edge(max_leaf1.vertex, max_leaf2.vertex)
+        G=self.get_graph()
+        G.add_edge(self.children[0].children[0], self.children[1].children[0])
+        # print(graph2hash(G))
+        return G
+        # self.hash = graph2hash(G)
+        # self.get_graph()max_leaf1.vertex
 
 
-
+        # add_edge(leaves1[0].vertex, leaves2[0][0])
 
 
 class Vertex:
@@ -138,18 +178,6 @@ def buildNodeByFormula(formula_string):
     node = Node(degreeSequence)
     return node
 
-
-
-
-def verif(ds):
-    sol_all=[]
-    for i in range(500):
-        G=graphs.DegreeSequenceConfigurationModel(ds)
-        if is_unique_and_connected(G, sol_all):
-            if not G.has_loops():
-                sol_all.append(G)
-    return sol_all
-
 def switch(G, v0, v1, v2, v3):
     """
     Switches 2 edges and returns a new graph.
@@ -190,6 +218,7 @@ def find_neutral_graph(ds):
     vertices_list = []
     for i in range(len(ds)):
         vertices_list.append(Vertex(i, ds[i]))
+    # Sorting vertices by number of free degree
     vertices_list.sort(key=operator.attrgetter('degree'), reverse=True)
     while any(v.degree for v in vertices_list) != 0:
         #Sorting vertices by degree
@@ -262,6 +291,15 @@ def label2seq(label):
 ################################################################################
 #                                   TESTING                                    #
 ################################################################################
+
+def verif(ds):
+    sol_all=[]
+    for i in range(500):
+        G=graphs.DegreeSequenceConfigurationModel(ds)
+        if is_unique_and_connected(G, sol_all):
+            if not G.has_loops():
+                sol_all.append(G)
+    return sol_all
 
 LRT = LabelledRootedTree
 
