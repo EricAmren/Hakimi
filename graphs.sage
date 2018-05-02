@@ -1,4 +1,4 @@
-from itertools import permutations
+from itertools import combinations
 
 class Vertex:
     def __init__(self):
@@ -11,6 +11,7 @@ class Vertex:
 
     def __repr__(self):
         return str(self.index)
+
 
 class Node:
     def __init__(self):
@@ -25,42 +26,44 @@ class Node:
         A minimum graph is a graph that is connected with
         the minimum number of edges.
         """
-        minimumGraphs = []
+        # minimumGraphs = set()
+        sequence = []
+        for vertex in self.vertices:
+            sequence.append(vertex.degree)
+        sequence = sorted(sequence, reverse=True)
         if not self.children:
-            self.vertices.sort(key=operator.attrgetter('degree'), reverse=True)
-            degreeSequence = []
-            hydrogenes = []
-            for vertex in self.vertices:
-                if vertex.degree == 1:
-                    hydrogenes.append(1)
-                else:
-                    degreeSequence.append(vertex.degree)
-            permut = permutations(degreeSequence, len(degreeSequence))
-            for seq in permut:
-                graph = Graph(len(self.vertices), loops=False, multiedges=True)
-                seq = list(seq)
-                full_seq = seq + hydrogenes
-                # print(full_seq)
-                # numberOfMinBond = len(full_seq - 1)
-                # while numberOfMinBond > 0:
-                #     for i in range(full_seq[0]):
-                #         graph.add_edge(full_seq[0])
-                #     full_seq[0]
-
-
-
-                #     for degree in full_seq:
-                #         for i in range(min(len(full_seq) - 1, degree)):
-                #             if
-
-
-            # graph = Graph(len(self.vertices), loops=False, multiedges=True)
-            # self.vertices.sort(key=operator.attrgetter('freeBonds'), reverse=True)
+            all_graphs = generate_all_graphs(len(self.vertices))
+            minimumGraphs = filter_graphs(sequence, all_graphs)
+            self.minimumGraphs = list(minimumGraphs)
+            # self.vertices.sort(key=operator.attrgetter('degree'), reverse=True)
+            # degreeSequence = []
+            # hydrogenes = []
             # for vertex in self.vertices:
-            #     graph.relabel()
-            # for vertex_ID in range(len(self.vertices)):
-            #     graph.relabel({vertex_ID:self.vertices[vertex_ID].index})
-            # self.minimumGraphs.append(graph)
+            #     if vertex.degree == 1:
+            #         hydrogenes.append(1)
+            #     else:
+            #         degreeSequence.append(vertex.degree)
+            # permut = list(set(permutations(degreeSequence, len(degreeSequence))))
+            # for seq in permut:
+            #     connected_vertices = []
+            #     graph = Graph(len(self.vertices), loops=False, multiedges=True)
+            #     seq = list(seq)
+            #     full_seq = seq + hydrogenes
+            #     for i in range(len(full_seq) - 1):
+            #         # if len(connected_vertices) == len(self.vertices):
+            #         #     minimumGraphs.add(graph2hash(graph))
+            #         # else:
+            #         for j in range(i + 1, len(full_seq)):
+            #             if j not in connected_vertices:
+            #                 graph.add_edge(i,j)
+            #                 if i not in connected_vertices:
+            #                     connected_vertices.append(i)
+            #                 if j not in connected_vertices:
+            #                     connected_vertices.append(j)
+            #                 if len(connected_vertices) == len(self.vertices):
+            #                     minimumGraphs.add(graph2hash(graph))
+            # return list(minimumGraphs)
+
 
 def graph2hash(graph):
     hash = graph.canonical_label().sparse6_string()
@@ -70,12 +73,12 @@ def hash2graph(hash):
     graph = Graph(hash, loops=False, multiedges=True, data_structure="sparse")
     return graph
 
-def generate_all(sequence):
-    G = Graph(len(sequence), multiedges=False, loops=False)
+def generate_all_graphs(numberOfVertices):
+    G = Graph(numberOfVertices, multiedges=False, loops=False)
     sol = set()
-    numberOfEdge = len(sequence) - 1
-    permut = list(set(permutations(sequence, 2)))
-    combinationOfEdges = list(permutations(permut, 3))
+    numberOfEdge = numberOfVertices - 1
+    permut = list(set(combinations(range(numberOfVertices), 2)))
+    combinationOfEdges = list(combinations(permut, numberOfEdge))
     for i in combinationOfEdges:
         new_graph = copy(G)
         for edge in list(i):
@@ -84,6 +87,33 @@ def generate_all(sequence):
         if new_graph.is_connected():
             sol.add(graph2hash(new_graph))
     return sol
+
+def write_to_file(solution, filename):
+    with open(filename, 'a') as f:
+        for i in solution:
+            f.write(i)
+            f.write('\n')
+
+def get_number_of_hydrogen(sequence):
+    numberOfHydrogen = 0
+    for degree in sequence:
+        if degree == 1:
+            numberOfHydrogen += 1
+    return numberOfHydrogen
+
+
+def filter_graphs(sequence, found_graphs):
+    filtered_results = copy(found_graphs)
+    for hash in found_graphs:
+        graph = hash2graph(hash)
+        sorted_seq = sorted(sequence)
+        for i in range(len(sequence)):
+            if graph.degree()[i] > sorted_seq[i]:
+            # if sorted_seq[i] > graph.degree()[i]:
+                filtered_results.remove(hash)
+                break
+
+    return filtered_results
 
 
 def set_vertex(index, degree):
@@ -99,13 +129,29 @@ def set_node(index, vertices_list):
     node.vertices = vertices_list
     return node
 
+def show_graph(hash):
+    show(hash2graph(hash))
+
 
 C1 = set_vertex("C1", 4)
-H1 = set_vertex("H1", 1)
+C2 = set_vertex("C2", 4)
+C3 = set_vertex("C3", 4)
 N1 = set_vertex("N1", 3)
+N2 = set_vertex("N2", 3)
+O1 = set_vertex("O1", 2)
+O2 = set_vertex("O2", 2)
+H1 = set_vertex("H1", 1)
+H2 = set_vertex("H2", 1)
 
-N01 = set_node("CH", [H1, N1, C1])
-N01.generate_minimum_graphs()
+N011 = set_node("CH", [C1,H1])
+N012 = set_node("NO", [N1,O1])
+N021 = set_node("CO", [C2,O2])
+N022 = set_node("CNH", [C3,N2,H2])
+patates = [N011,N012,N021,N022]
+for patate in patates:
+    patate.generate_minimum_graphs()
+# N02 = set_node("NNOHHHH", [N1,N1,O1,H1,H1,H1,H1])
+# N01.generate_minimum_graphs()
 
 
 
