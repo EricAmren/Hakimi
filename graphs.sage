@@ -94,12 +94,12 @@ def write_to_file(solution, filename):
             f.write(i)
             f.write('\n')
 
-def get_number_of_hydrogen(sequence):
-    numberOfHydrogen = 0
-    for degree in sequence:
-        if degree == 1:
-            numberOfHydrogen += 1
-    return numberOfHydrogen
+# def get_number_of_hydrogen(sequence):
+#     numberOfHydrogen = 0
+#     for degree in sequence:
+#         if degree == 1:
+#             numberOfHydrogen += 1
+#     return numberOfHydrogen
 
 
 def filter_graphs(sequence, found_graphs):

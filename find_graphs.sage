@@ -8,6 +8,7 @@ class Node:
         self.children = []
         self.freeBonds = self.setFreeBonds()
         self.parent = None
+        self.edges = []
         # self.hash = self.build_node_hash()
         self.hash = None
         self.vertex = None
@@ -120,12 +121,18 @@ class Node:
 
 
         # add_edge(leaves1[0].vertex, leaves2[0][0])
+    def add_edge1(self, vertex1, vertex2):
+        self.edges.append((vertex1, vertex2))
+        vertex1.degree -= 1
+        vertex2.degree -= 1
+
 
 
 class Vertex:
     def __init__(self, index, degree):
         self.index = index
         self.degree = degree
+        self.freeBonds = degree
 
 def getMaxFreeBonds(degreeSequence):
     freeBonds = 0
