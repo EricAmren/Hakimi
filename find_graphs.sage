@@ -1,5 +1,4 @@
 #load("spectro.sage")
-#sys.setrecursionlimit(20000)
 
 class Node:
     def __init__(self, degreeSequence):
@@ -9,17 +8,19 @@ class Node:
         self.freeBonds = self.setFreeBonds()
         self.parent = None
         self.edges = []
+        self.upper = self.freeBonds
+        self.lower = self.setLowerBonds()
         # self.hash = self.build_node_hash()
         self.hash = None
         self.vertex = None
         if len(degreeSequence) == 1:
             self.build_node_hash()
 
-    def __str__(self):
-        return str(self.degreeSequence)
+    # def __str__(self):
+        # return str(self.degreeSequence)
 
-    def __repr__(self):
-        return str(self.degreeSequence)
+    # def __repr__(self):
+        # return str(self.degreeSequence)
 
     def getNumberOfFreeBonds(self):
         seq = self.degreeSequence
@@ -56,8 +57,21 @@ class Node:
         elif len(seq) == 0:
             return []
         else :
-            return self.getNumberOfFreeBonds()
+            return getNumberOfFreeBonds()
             # raise ValueError("Invalid degree sequence : leaves can only contain one vertex.")
+
+    def setLowerBonds(self):
+        if self.children:
+            max_lower_child = max(self.children, key=attrgetter('lower'))
+            lower = max_lower_child.lower - sum(self.children, key=attrgetter('upper') + max_lower_child.upper)
+            return lower
+        else:
+            lower = self.freeBonds
+            return lower
+
+
+
+
 
     def add_children(self, list_of_children):
         self.children.extend(list_of_children)
@@ -217,6 +231,53 @@ def has_isomorph(new_graph, graphs_list):
             return True
     return False
 
+def find_graph(root):
+    parents = []
+    for i in root.get_leaves():
+        if i.parent not in parents:
+            parents.append(i.parent)
+    while parents != []:
+        for parent in parents:
+            spanning_tree = link_components_of_node(parent)
+            parent.graph = spanning_tree
+            if parent.parent not in parents:
+                parents.append(parent.parent)
+            parents.pop(0)
+
+
+
+
+
+
+def link_components_of_node(node):
+    """
+    Link
+    """
+    if not node.children[0].children:
+        atoms = node.children
+        nb_of_edges_to_add = len(atoms) - 1
+        linked_atoms = []
+        while nb_of_edges_to_add > 0:
+            atoms.sort(key=operator.attrgetter('freeBonds'), reverse=True)
+            max_atom = atoms[0]
+            for atom in atoms:
+                if atom != max_atom and not atom in linked_atoms:
+                    next_atom = atom
+                    break
+            node.edges.append((max_atom, next_atom))
+            max_atom.freeBonds -= 1
+            next_atom.freeBonds -= 1
+            if not max_atom in linked_atoms:
+                linked_atoms.append(max_atom)
+            if not next_atom in linked_atoms:
+                linked_atoms.append(next_atom)
+            nb_of_edges_to_add -= 1
+        if set(linked_atoms) != set(atoms):
+            raise ValueError("TODO") #TODO
+    else:
+        print("oijoi")
+
+
 def find_neutral_graph(ds):
     ### TODO : verify that a graph can be obtained
     G = Graph(len(ds), loops=False, multiedges=True)
@@ -348,6 +409,7 @@ CO = BPN([C,O])
 CNH = BPN([C,N,H])
 CCNOH = BPN([CO,CNH])
 
+test = BPN([BNF("C"),BNF("C"),BNF("O"),BNF("H"),BNF("C"),BNF("N"),BNF("N")])
 root = BPN([CNOH,CCNOH])
 # for child in root.children:
 #     child.freeBonds
