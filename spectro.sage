@@ -1,6 +1,5 @@
 from itertools import combinations
 
-
 class Node:
     """
     A Node contains all conformations of a degree sequence.
@@ -16,6 +15,8 @@ class Node:
         self.x = None
         self.freeBonds = None
         self.edges = []
+        self.is_special = False
+        self.is_root = False
 
     def add_children(self, list_of_children):
         self.children = list_of_children
@@ -51,23 +52,6 @@ class Node:
             return True
         else:
             return False
-
-    # def set_x(self):
-    #     if not self.parent:
-    #         self.x = 0
-    #     max_lower_child = max(self.children, key=operator.attrgetter('lower'))
-    #     y = 2 * len(self.children) - 2 - sum(child.upper for child in self.children) - max_lower_child.upper
-    #     x_max = max(max_lower_child.lower, y)
-    #     if x_max <= 0:
-    #         if x_max % 2 == 0: # If x_max is even : x_max = 2
-    #             x_max = 2
-    #         if x_max % 2 == 1: # If x_max is odd : x_max = 1
-    #             x_max = 1
-    #     for child in self.children:
-    #         if child != max_lower_child:
-    #             child.x = child.upper
-    #         else:
-    #             child.x = x_max
 
     def create_tree(self):
         #TODO
@@ -117,11 +101,9 @@ class Node:
         atom1.freeBonds += 1
         atom2.freeBonds += 1
 
-# def set_x(node):
-#     if node.children:
-#         max_lower_child = max(node.children, key=operator.attrgetter('lower'))
     def function_x(self):
         if self.parent == None:
+            self.is_root = True
             if self.is_valid():
                 self.x = self.lower
                 if self.children:
@@ -132,6 +114,7 @@ class Node:
         else:
             max_lower_node = max(self.parent.children, key=operator.attrgetter('lower'))
             if self == max_lower_node:
+                self.is_special = True
                 y = 2 * len(self.parent.children) - 2 - sum(child.upper for child in self.parent.children) - self.upper
                 x = max(self.lower, y)
                 if x <= 0:
@@ -142,6 +125,24 @@ class Node:
                 self.x = x
                 for child in self.children:
                     child.function_x()
+
+    def reduce_children(self):
+        nb_of_bonds_from_children = sum(child.x for child in self.children) - 2 * (len(self.children)- 1)
+        while self.x < nb_of_bonds_from_children:
+            for child in self.children:
+                if child.is_special:
+                    pass
+                else:
+                    if child.x > child.lower:
+                        if child.x > 2:
+                            child.x -= 2
+                            nb_of_bonds_from_children -= 2
+                            print(nb_of_bonds_from_children)
+            if all(child.x <= 2 for child in self.children):
+
+
+            print(self.x, nb_of_bonds_from_children)
+
 
     def get_number_of_remaining_bonds(self):
         """
@@ -157,17 +158,6 @@ class Node:
             number_of_remaining_bonds = present_x - self.x
             return number_of_remaining_bonds
 
-    # def add_remaining_bonds(self):
-    #     remaining_bonds = self.get_number_of_remaining_bonds()
-    #     if remaining_bonds == 0:
-    #         self.create_tree()
-
-    #     while remaining_bonds != 0:
-    #         for child in self.children:
-    #             if child.x == child.lower:
-    #                 continue
-    #             if child.x > child.lower:
-    #                 if child.x - child.lower >= 2:
 
     def build_global_tree(self):
         self.create_tree()
@@ -181,24 +171,7 @@ def set_all_x_to_upper(root):
         for child in root.children:
             set_all_x_to_upper(child)
 
-
-# def set_all_x(node):
-#     if node.children:
-#         node.set_x()
-#         for child in node.children:
-#             set_all_x(child)
-#     else:
-#         pass
-
-
-# def get_max_lower_child(node):
-#     l = []
-#     for child in node.children:
-#         l.append((child.lower, child))
-#     max_lower_child = max(l, key=operator.itemgetter(1))[1]
-#     max_lower_value = max_lower_child.lower
-#     # max_lower = max(l, key=operator.itemgetter(1))[0]
-#     return max_lower_value
+     return max_lower_value
 
 
 def set_atom(degree):
@@ -215,10 +188,12 @@ C2 = set_atom(4)
 C3 = set_atom(4)
 N1 = set_atom(3)
 N2 = set_atom(3)
+N3 = set_atom(3)
 O1 = set_atom(2)
 O2 = set_atom(2)
 H1 = set_atom(1)
 H2 = set_atom(1)
+H3 = set_atom(1)
 
 n0 = Node()
 n1 = Node()
@@ -227,16 +202,17 @@ n3 = Node()
 n4 = Node()
 n5 = Node()
 n6 = Node()
-n3.add_children([C1,H1])
-n4.add_children([N1,O1])
-n5.add_children([C2,O2])
-n6.add_children([C3,N2,H2])
-n1.add_children([n3,n4])
-n2.add_children([n5,n6])
-n0.add_children([n1,n2])
+# n3.add_children([C1,H1])
+# n4.add_children([N1,O1])
+# n5.add_children([C2,O2])
+# n6.add_children([C3,N2,H2])
+# n1.add_children([n3,n4])
+# n2.add_children([n5,n6])
+# n0.add_children([n1,n2])
 
 set_all_x_to_upper(n0)
 n0.function_x()
+
 
 
 
