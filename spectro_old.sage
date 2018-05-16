@@ -202,10 +202,8 @@ def build_neutral_graph(deg_seq):
 
     while len(part)>0:
         for i in range(min(deg_seq[part[0]]-G.degree(part[0]) , len(part)-1)):
-            print("i")
             G.add_edge(part[0],part[1+ i])
         part=[i for i in part if deg_seq[i]>G.degree(i)]
-        print("iii")
     # make the graph connected
     CC=G.connected_components()
     while len(CC)>1:
