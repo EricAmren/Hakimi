@@ -7,10 +7,10 @@ def TODO():
 
 
 class Node:
-    def __init__(self, atoms = []):
+    def __init__(self, atoms = {}):
         self.parent = None
         self.children = []
-        self.atoms = atoms
+        self.atoms = list(atoms)
 
     def add_children(self, children):
         for child in children:
@@ -93,34 +93,34 @@ def connect_node(node, G):
         connect_2_atoms(G, max(max_connected_child.atoms), max(max_free_child.atoms))
         connected_children.append(max_free_child)
 
-def connect_node2(node, G):
-    connected_children = set()
-    while not node.is_connected(G):
-        max_atoms_of_children = []
-        for child in node.children:
-            max_atom = max(child.atoms, key=attrgetter('freeBonds'))
-            if max_atom.freeBonds > 0:
-                max_atoms_of_children.append((max_atom, child))
-            else:
-                pass
-        max_atoms_of_children.sort(reverse=True)
-        all_pairs = combinations(max_atoms_of_children, 2)
-        for pair in all_pairs:
-            atom1 = pair[0][0]
-            atom2 = pair[1][0]
-            child1 = pair[0][1]
-            child2 = pair[1][1]
-            if len(connected_children) == 0:
-                connected_children.add(child1)
-            if child1 in connected_children and child2 in connected_children:
-                pass
-            elif not child1 in connected_children and not child2 in connected_children:
-                pass
-            else:
-                connect_2_atoms(G, atom1, atom2)
-                connected_children.add(child1)
-                connected_children.add(child2)
-                break
+# def connect_node2(node, G):
+#     connected_children = set()
+#     while not node.is_connected(G):
+#         max_atoms_of_children = []
+#         for child in node.children:
+#             max_atom = max(child.atoms, key=attrgetter('freeBonds'))
+#             if max_atom.freeBonds > 0:
+#                 max_atoms_of_children.append((max_atom, child))
+#             else:
+#                 pass
+#         max_atoms_of_children.sort(reverse=True)
+#         all_pairs = combinations(max_atoms_of_children, 2)
+#         for pair in all_pairs:
+#             atom1 = pair[0][0]
+#             atom2 = pair[1][0]
+#             child1 = pair[0][1]
+#             child2 = pair[1][1]
+#             if len(connected_children) == 0:
+#                 connected_children.add(child1)
+#             if child1 in connected_children and child2 in connected_children:
+#                 pass
+#             elif not child1 in connected_children and not child2 in connected_children:
+#                 pass
+#             else:
+#                 connect_2_atoms(G, atom1, atom2)
+#                 connected_children.add(child1)
+#                 connected_children.add(child2)
+#                 break
 
 def fill_remaining_bonds(root,G):
     unfilled_atoms = []
@@ -137,19 +137,19 @@ def fill_remaining_bonds(root,G):
             if atom.freeBonds != 0:
                 unfilled_atoms.append(atom)
 
-def generate_first_graph(leaves, upper_nodes):
+def generate_first_graph(tree):
     G = Graph(0, loops=False, multiedges=True)
     index = 0
-    for leaf in leaves:
+    for leaf in tree.leaves:
         for atom in leaf.atoms:
             G.add_vertex(index)
             atom.vertex = index
             # G.set_vertex(index, atom.valence)
             index += 1
-    connect_leaves(leaves, G)
-    for node in upper_nodes:
+    connect_leaves(tree.leaves, G)
+    for node in tree.upper_nodes:
         connect_node(node, G)
-    fill_remaining_bonds(root, G)
+    fill_remaining_bonds(tree.root, G)
     return G
 
 
@@ -166,15 +166,13 @@ class Fragmentation_Tree:
         root = self.root
         branches = self.sequence
         self.rec_set_nodes(root, branches)
+        self.upper_nodes = list(reversed(self.upper_nodes))
         # return ()
 
     def rec_set_nodes(self, node, branches):
         for branch in branches:
             if type(branch) == sage.rings.integer.Integer:
-                degree = branch
-                new_atom = Atom()
-                new_atom.valence = degree
-                new_atom.freeBonds = degree
+                new_atom = build_atom(branch)
                 node.atoms.append(new_atom)
                 if node not in self.leaves:
                     self.leaves.append(node)
@@ -188,12 +186,13 @@ class Fragmentation_Tree:
                         node.atoms.append(atom)
                 node.add_children([child_node])
 
+
+
 def build_fragmentation_tree(sequence):
     tree = Fragmentation_Tree(sequence)
     tree.set_nodes()
     return tree
 
-T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
 
 ###
 # def build_fragmentation_tree(tree):
@@ -273,53 +272,54 @@ def relabel_graph(graph):
 # upper_nodes = [G1,G2,root]
 
 ## Set2
-C1 = build_atom(4)
-C2 = build_atom(4)
-N1 = build_atom(3)
-N2 = build_atom(3)
-N3 = build_atom(3)
-O1 = build_atom(2)
-O2 = build_atom(2)
-H1 = build_atom(1)
-H2 = build_atom(1)
-H3 = build_atom(1)
+# C1 = build_atom(4)
+# C2 = build_atom(4)
+# N1 = build_atom(3)
+# N2 = build_atom(3)
+# N3 = build_atom(3)
+# O1 = build_atom(2)
+# O2 = build_atom(2)
+# H1 = build_atom(1)
+# H2 = build_atom(1)
+# H3 = build_atom(1)
 
-n1 = Node([C1])
-n2 = Node([N1])
-n3 = Node([O1,H1])
-n4 = Node([N2,O2])
-n5 = Node([N3,H2])
-n6 = Node([C2,H3])
+# n1 = Node({C1})
+# n2 = Node({N1})
+# n3 = Node({O1,H1})
+# n4 = Node({N2,O2})
+# n5 = Node({N3,H2})
+# n6 = Node({C2,H3})
 
-G1 = Node(n1.atoms + n2.atoms + n3.atoms)
-G1.add_children([n1,n2,n3])
-G2 = Node(n4.atoms + n5.atoms)
-G2.add_children([n4,n5])
-G3 = Node(n6.atoms)
-G3.add_children([n6])
-root = Node(G1.atoms + G2.atoms + G3.atoms)
-root.add_children([G1,G2,G3])
-leaves = [n1,n2,n3,n4,n5,n6]
-upper_nodes = [G1,G2,G3,root]
+# G1 = Node(n1.atoms + n2.atoms + n3.atoms)
+# G1.add_children([n1,n2,n3])
+# G2 = Node(n4.atoms + n5.atoms)
+# G2.add_children([n4,n5])
+# G3 = Node(n6.atoms)
+# G3.add_children([n6])
+# root = Node(G1.atoms + G2.atoms + G3.atoms)
+# root.add_children([G1,G2,G3])
+# leaves = [n1,n2,n3,n4,n5,n6]
+# upper_nodes = [G1,G2,G3,root]
 
 
-G = generate_first_graph(leaves, upper_nodes)
+# G = generate_first_graph(leaves, upper_nodes)
 # show(G)
 
 ## Second step : Generate all graphs
 
-def generate_all_graphs(G):
+def generate_all_graphs(tree):
+    G = generate_first_graph(tree)
     valid_hashes = {graph2hash(G)}
     valid_graphs = [G]
     stack = [G]
     while len(stack) > 0:
         new_G = stack.pop()
-        rec_generate_all_graphs(new_G, valid_hashes, stack, valid_graphs)
+        rec_generate_all_graphs(tree, new_G, valid_hashes, stack, valid_graphs)
         print(len(valid_hashes))
     # return valid_hashes
     return valid_graphs
 
-def rec_generate_all_graphs(G, valid_hashes, stack, valid_graphs):
+def rec_generate_all_graphs(tree, G, valid_hashes, stack, valid_graphs):
     all_pairs_of_edges = combinations(G.edges(), 2)
     for pair in all_pairs_of_edges:
         edge1 = pair[0]
@@ -331,7 +331,7 @@ def rec_generate_all_graphs(G, valid_hashes, stack, valid_graphs):
             new_G2 = copy(G)
             straight_switch(new_G1, pair[0], pair[1])
             crossed_switch(new_G2, pair[0], pair[1])
-            all_nodes = leaves + upper_nodes
+            all_nodes = tree.leaves + tree.upper_nodes
             for new_G in [new_G1, new_G2]:
                 new_G_is_valid = True
                 for node in all_nodes:
@@ -344,34 +344,34 @@ def rec_generate_all_graphs(G, valid_hashes, stack, valid_graphs):
                         valid_graphs.append(new_G)
     return (valid_hashes, stack, valid_graphs)
 
-def switch_all_edges(G):
-    all_pairs_of_edges = combinations(G.edges(), 2)
-    valid_graphs = [G]
-    # valid_hashes = {graph2hash(G)}
-    # stack = {graph2hash(G)}
-    for pair in all_pairs_of_edges:
-        edge1 = pair[0]
-        edge2 = pair[1]
-        if edge1[0] in edge2 or edge1[1] in edge2:
-            pass
-        else :
-            new_G1 = copy(G)
-            new_G2 = copy(G)
-            straight_switch(new_G1, pair[0], pair[1])
-            crossed_switch(new_G2, pair[0], pair[1])
-            all_nodes = leaves + upper_nodes
-            new_G1_is_valid = True
-            new_G2_is_valid = True
-            for node in all_nodes:
-                if not node.is_connected(new_G1):
-                    new_G1_is_valid = False
-                if not node.is_connected(new_G2):
-                    new_G2_is_valid = False
-            if new_G1_is_valid:
-                valid_graphs.append(new_G1)
-            if new_G2_is_valid:
-                valid_graphs.append(new_G2)
-    return valid_graphs
+# def switch_all_edges(G):
+#     all_pairs_of_edges = combinations(G.edges(), 2)
+#     valid_graphs = [G]
+#     # valid_hashes = {graph2hash(G)}
+#     # stack = {graph2hash(G)}
+#     for pair in all_pairs_of_edges:
+#         edge1 = pair[0]
+#         edge2 = pair[1]
+#         if edge1[0] in edge2 or edge1[1] in edge2:
+#             pass
+#         else :
+#             new_G1 = copy(G)
+#             new_G2 = copy(G)
+#             straight_switch(new_G1, pair[0], pair[1])
+#             crossed_switch(new_G2, pair[0], pair[1])
+#             all_nodes = leaves + upper_nodes
+#             new_G1_is_valid = True
+#             new_G2_is_valid = True
+#             for node in all_nodes:
+#                 if not node.is_connected(new_G1):
+#                     new_G1_is_valid = False
+#                 if not node.is_connected(new_G2):
+#                     new_G2_is_valid = False
+#             if new_G1_is_valid:
+#                 valid_graphs.append(new_G1)
+#             if new_G2_is_valid:
+#                 valid_graphs.append(new_G2)
+#     return valid_graphs
 
 def straight_switch(G, edge1, edge2):
     assert edge1 in G.edges(), "edge1 is not in G"
@@ -409,4 +409,7 @@ def hash2graph(hash):
 
 
 
-# sol = generate_all_graphs(G)
+T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
+tree = build_fragmentation_tree(T)
+# g = generate_first_graph(tree)
+sol = generate_all_graphs(tree)
