@@ -31,6 +31,9 @@ class Atom:
         self.valence = None
         self.freeBonds = 0
 
+    def __gt__(self, other):
+        return self.freeBonds > other.freeBonds
+
 def build_atom(valence):
     atom = Atom()
     atom.valence = valence
@@ -44,7 +47,7 @@ def connect_2_atoms(G, atom1, atom2):
     atom1.freeBonds -= 1
     atom2.freeBonds -= 1
 
-def connect_leaves(list_of_leaves, G):
+def connect_leaves2(list_of_leaves, G):
     for leaf in list_of_leaves:
         connected_atoms = set()
         while not leaf.is_connected(G):
@@ -55,12 +58,42 @@ def connect_leaves(list_of_leaves, G):
                 atom2 = pair[1]
                 if atom1 in connected_atoms and atom2 in connected_atoms:
                     pass
+                # elif not atom1 in connected_atoms and not atom2 in connected_atoms:
+                #     pass
                 else:
                     connect_2_atoms(G, atom1, atom2)
                     connected_atoms.update(pair)
                     break
 
+
+def connect_leaves(list_of_leaves, G):
+    for leaf in list_of_leaves:
+        free_atoms = sorted(leaf.atoms, key=attrgetter('freeBonds'),reverse=True)
+        max_atom = free_atoms.pop(0)
+        connected_atoms = [max_atom]
+
+        while free_atoms:
+            max_connected_atom = max(connected_atoms, key=attrgetter('freeBonds'))
+            if max_connected_atom.freeBonds == 0:
+                raise ValueError("Not enough free atoms.")
+            max_free_atom = free_atoms.pop(0)
+            connect_2_atoms(G, max_connected_atom, max_free_atom)
+            connected_atoms.append(max_free_atom)
+
 def connect_node(node, G):
+    free_children = sorted(node.children, key=attrgetter('atoms'), reverse=True)
+    max_child = free_children.pop(0)
+    connected_children = [max_child]
+
+    while free_children:
+        max_connected_child = max(connected_children, key=attrgetter('atoms'))
+        if max(max_connected_child.atoms).freeBonds == 0:
+            raise ValueError("Not enough free atoms.")
+        max_free_child = free_children.pop(0)
+        connect_2_atoms(G, max(max_connected_child.atoms), max(max_free_child.atoms))
+        connected_children.append(max_free_child)
+
+def connect_node2(node, G):
     connected_children = set()
     while not node.is_connected(G):
         max_atoms_of_children = []
@@ -119,38 +152,91 @@ def generate_first_graph(leaves, upper_nodes):
     fill_remaining_bonds(root, G)
     return G
 
-f_tree = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
 
-def build_fragmentation_tree(tree):
-    set_atoms(tree)
-    # leaves, upper_nodes = set_nodes(tree)
+class Fragmentation_Tree:
+    def __init__(self, sequence = None):
+        self.sequence = sequence
+        self.leaves = []
+        self.upper_nodes = []
+        self.root = Node()
 
-def set_atoms(tree):
-    atoms = []
-    rec_set_atoms(tree, atoms)
-    return atoms
 
-def rec_set_atoms(node1, atoms):
-    for node in node1:
-        if type(node) == sage.rings.integer.Integer:
-            atoms.append(build_atom(node))
-        elif type(node) is list:
-            rec_set_atoms(node, atoms)
+
+    def set_nodes(self):
+        root = self.root
+        branches = self.sequence
+        self.rec_set_nodes(root, branches)
+        # return ()
+
+    def rec_set_nodes(self, node, branches):
+        for branch in branches:
+            if type(branch) == sage.rings.integer.Integer:
+                degree = branch
+                new_atom = Atom()
+                new_atom.valence = degree
+                new_atom.freeBonds = degree
+                node.atoms.append(new_atom)
+                if node not in self.leaves:
+                    self.leaves.append(node)
+            else:
+                if not node in self.upper_nodes:
+                    self.upper_nodes.append(node)
+                child_node = Node()
+                self.rec_set_nodes(child_node, branch)
+                for atom in child_node.atoms:
+                    if atom not in node.atoms:
+                        node.atoms.append(atom)
+                node.add_children([child_node])
+
+def build_fragmentation_tree(sequence):
+    tree = Fragmentation_Tree(sequence)
+    tree.set_nodes()
+    return tree
+
+T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
+
+###
+# def build_fragmentation_tree(tree):
+#     # set_atoms(tree)
+#     set_nodes(tree)
+#     # leaves, upper_nodes = set_nodes(tree)
 
 # def set_nodes(tree):
+#     root = Node()
 #     leaves = []
 #     upper_nodes = []
-#     for node in tree:
-#         rec_set_nodes(node, leaves, upper_nodes)
-#     return (leaves, upper_nodes)
+#     rec_set_nodes(root, tree, leaves, upper_nodes)
+#     return ()
 
-# def rec_set_nodes(node):
-#     if type(node) is list:
-#     else:
-#         new_atom = build_atom(node)
+# def rec_set_nodes(root, tree, leaves, upper_nodes):
+#     for branch in tree:
+#         if type(branch) == sage.rings.integer.Integer:
+#             root.atoms.append(build_atom(branch))
+#             leaves.append(root)
+#         else:
+#             upper_nodes.append(root)
+#             new_node = Node()
+#             rec_set_nodes(new_node, branch, leaves, upper_nodes)
+#             for atom in new_node.atoms:
+#                 if atom not in root.atoms:
+#                     root.atoms.append(atom)
+#             root.add_children([new_node])
 
 
-# def set_leaves(tree):
+
+# def set_atoms(tree):
+#     atoms = []
+#     rec_set_atoms(tree, atoms)
+#     return atoms
+
+# def rec_set_atoms(node1, atoms):
+#     for node in node1:
+#         if type(node) == sage.rings.integer.Integer:
+#             atoms.append(build_atom(node))
+#         elif type(node) is list:
+#             rec_set_atoms(node, atoms)
+
+
 
 def relabel_graph(graph):
     keys = graph.vertices()
