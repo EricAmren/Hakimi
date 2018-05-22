@@ -128,7 +128,35 @@ def connect_leaves(list_of_leaves, G):
             connected_atoms.append(max_free_atom)
         assert leaf.is_connected(G), "Leaves are not connected!"
 
-def connect_node(node, G):
+def connect_node(node, G):  ####TODO#####"
+    free_children = node.children
+    max_child = get_max_atom_of_nodes(node.children)
+    # max_child is a tuple containing the atom with the most of free bonds
+    # and the node child containing this atom.
+    connected_children = [max_child]
+    free_children.remove(max_child[1])
+    while free_children:
+        max_connected_child = max(connected_children)
+        if max_connected_child[0].freeBonds == 0:
+            raise ValueError("Not enough free atoms.")
+        max_free_child = get_max_atom_of_nodes(free_children)
+        if max_free_child[0].freeBonds == 0:
+            raise ValueError("Not enough free atoms!")
+        connect_2_atoms(G, max_connected_child[0], max_free_child[0])
+        connected_children.append(max_free_child)
+        free_children.remove(max_free_child[1])
+
+
+
+
+def get_max_atom_of_nodes(node_list):
+    max_atoms = []
+    for node in node_list:
+        max_atom = max(node.atoms, key=attrgetter('freeBonds'))
+        max_atoms.append((max_atom, node))
+    return max(max_atoms)
+
+def connect_node2(node, G):
     free_children = sorted(node.children, key=attrgetter('atoms'), reverse=True)
     max_child = free_children.pop(0)
     connected_children = [max_child]
