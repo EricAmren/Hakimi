@@ -1,8 +1,54 @@
+import re
 from operator import attrgetter
 from itertools import combinations
 
-def TODO():
-    raise NotImplementedError("To be implemented")
+valence_dict = dict()
+valence_dict['H'] = 1
+valence_dict['O'] = 2
+valence_dict['N'] = 3
+valence_dict['C'] = 4
+valence_dict['P'] = 5
+valence_dict['S'] = 6
+
+def draw_mol(G):
+    dic_colors={}
+    dic_colors["black"]=[i for i in G if G.degree(i)==4]
+    dic_colors["red"]=[i for i in G if G.degree(i)==2]
+    dic_colors["white"]=[i for i in G if G.degree(i)==1]
+    dic_colors["blue"]=[i for i in G if G.degree(i)==3]
+    if G.has_multiple_edges():
+        G.plot(vertex_colors=dic_colors).show()
+    else:
+
+
+        G.plot3d(vertex_colors=dic_colors).show()
+
+def formula2degrees(formula):
+    """
+    From a chemical formula, return the corresponding degree sequence as a list.
+    """
+    splitted_formula = re.findall(r'([A-Z][a-z]*)(\d*)', formula)
+    # print(splitted_formula)
+    degree_sequence = []
+    for atom in splitted_formula:
+        if atom[1] == '':
+            degree = valence_dict[atom[0]]
+            degree_sequence.append(degree)
+        else:
+            for i in range(int(atom[1])):
+                degree = valence_dict[atom[0]]
+                degree_sequence.append(degree)
+    degree_sequence.sort(reverse=True)
+    return degree_sequence
+
+    # atom = None
+    # number = ''
+    # for i in formula:
+    #     if formula[i].isalpha():
+    #         dict1[atom] = number
+    #         atom = formula[i]
+    #     if formula[i].isdigit():
+    #         number += formula[i]
 
 
 
@@ -47,23 +93,23 @@ def connect_2_atoms(G, atom1, atom2):
     atom1.freeBonds -= 1
     atom2.freeBonds -= 1
 
-def connect_leaves2(list_of_leaves, G):
-    for leaf in list_of_leaves:
-        connected_atoms = set()
-        while not leaf.is_connected(G):
-            sorted_atoms = sorted(leaf.atoms, key=attrgetter('freeBonds'), reverse=True)
-            all_pairs = combinations(sorted_atoms, 2)
-            for pair in all_pairs:
-                atom1 = pair[0]
-                atom2 = pair[1]
-                if atom1 in connected_atoms and atom2 in connected_atoms:
-                    pass
-                # elif not atom1 in connected_atoms and not atom2 in connected_atoms:
-                #     pass
-                else:
-                    connect_2_atoms(G, atom1, atom2)
-                    connected_atoms.update(pair)
-                    break
+# def connect_leaves2(list_of_leaves, G):
+#     for leaf in list_of_leaves:
+#         connected_atoms = set()
+#         while not leaf.is_connected(G):
+#             sorted_atoms = sorted(leaf.atoms, key=attrgetter('freeBonds'), reverse=True)
+#             all_pairs = combinations(sorted_atoms, 2)
+#             for pair in all_pairs:
+#                 atom1 = pair[0]
+#                 atom2 = pair[1]
+#                 if atom1 in connected_atoms and atom2 in connected_atoms:
+#                     pass
+#                 elif not atom1 in connected_atoms and not atom2 in connected_atoms:
+#                     pass
+#                 else:
+#                     connect_2_atoms(G, atom1, atom2)
+#                     connected_atoms.update(pair)
+#                     break
 
 
 def connect_leaves(list_of_leaves, G):
@@ -76,9 +122,11 @@ def connect_leaves(list_of_leaves, G):
             max_connected_atom = max(connected_atoms, key=attrgetter('freeBonds'))
             if max_connected_atom.freeBonds == 0:
                 raise ValueError("Not enough free atoms.")
+            free_atoms = sorted(free_atoms, key=attrgetter('freeBonds'), reverse=True)
             max_free_atom = free_atoms.pop(0)
             connect_2_atoms(G, max_connected_atom, max_free_atom)
             connected_atoms.append(max_free_atom)
+        assert leaf.is_connected(G), "Leaves are not connected!"
 
 def connect_node(node, G):
     free_children = sorted(node.children, key=attrgetter('atoms'), reverse=True)
@@ -90,7 +138,13 @@ def connect_node(node, G):
         if max(max_connected_child.atoms).freeBonds == 0:
             raise ValueError("Not enough free atoms.")
         max_free_child = free_children.pop(0)
-        connect_2_atoms(G, max(max_connected_child.atoms), max(max_free_child.atoms))
+        try:
+            connect_2_atoms(G, max(max_connected_child.atoms), max(max_free_child.atoms))
+        except AssertionError:
+            print("Error in connect_node")
+            print(max(max_connected_child.atoms).valence, max(max_free_child.atoms).valence)
+            print(len(node.children[0].children[0].children[0].children[0].children))
+            exit(0)
         connected_children.append(max_free_child)
 
 # def connect_node2(node, G):
@@ -194,49 +248,6 @@ def build_fragmentation_tree(sequence):
     return tree
 
 
-###
-# def build_fragmentation_tree(tree):
-#     # set_atoms(tree)
-#     set_nodes(tree)
-#     # leaves, upper_nodes = set_nodes(tree)
-
-# def set_nodes(tree):
-#     root = Node()
-#     leaves = []
-#     upper_nodes = []
-#     rec_set_nodes(root, tree, leaves, upper_nodes)
-#     return ()
-
-# def rec_set_nodes(root, tree, leaves, upper_nodes):
-#     for branch in tree:
-#         if type(branch) == sage.rings.integer.Integer:
-#             root.atoms.append(build_atom(branch))
-#             leaves.append(root)
-#         else:
-#             upper_nodes.append(root)
-#             new_node = Node()
-#             rec_set_nodes(new_node, branch, leaves, upper_nodes)
-#             for atom in new_node.atoms:
-#                 if atom not in root.atoms:
-#                     root.atoms.append(atom)
-#             root.add_children([new_node])
-
-
-
-# def set_atoms(tree):
-#     atoms = []
-#     rec_set_atoms(tree, atoms)
-#     return atoms
-
-# def rec_set_atoms(node1, atoms):
-#     for node in node1:
-#         if type(node) == sage.rings.integer.Integer:
-#             atoms.append(build_atom(node))
-#         elif type(node) is list:
-#             rec_set_atoms(node, atoms)
-
-
-
 def relabel_graph(graph):
     keys = graph.vertices()
     values = graph.degree()
@@ -326,6 +337,15 @@ def rec_generate_all_graphs(tree, G, valid_hashes, stack, valid_graphs):
         edge2 = pair[1]
         if edge1[0] in edge2 or edge1[1] in edge2:
             pass
+        # edges cannot share one vertex.
+        # elif edge1[0].valence == 1 or edge1[1].valence == 1:
+        #     if edge2[0].valence == 1 or edge2[1].valence == 1:
+        #         pass
+        # # If one edge has a hydrogene, there is no need to swap with an edge
+        # # also containing a hydrogene.
+        # elif edge2[0].valence == 1 or edge2[1].valence == 1:
+        #     if edge1[0].valence == 1 or edge1[1].valence == 1:
+        #         pass
         else :
             new_G1 = copy(G)
             new_G2 = copy(G)
@@ -409,7 +429,16 @@ def hash2graph(hash):
 
 
 
-T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
-tree = build_fragmentation_tree(T)
+# T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
+# tree = build_fragmentation_tree(T)
 # g = generate_first_graph(tree)
+# sol = generate_all_graphs(tree)
+
+## Real fragmentation trees
+f = formula2degrees
+x = formula2degrees('C9H16')
+y = formula2degrees('C8H9N')
+# T = [[[[x ,[4,2]], y], [4,2]], [2,1,1]]
+T = [[[[x,[4,2]],[y]],[[[4,2]]]], [[[[2,1,1]]]]]
+tree = build_fragmentation_tree(T)
 sol = generate_all_graphs(tree)
