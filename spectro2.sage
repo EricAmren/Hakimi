@@ -1,3 +1,4 @@
+import cProfile
 import re
 from operator import attrgetter
 from itertools import combinations
@@ -9,6 +10,7 @@ valence_dict['N'] = 3
 valence_dict['C'] = 4
 valence_dict['P'] = 5
 valence_dict['S'] = 6
+valence_dict['Cl'] = 7
 
 def draw_mol(G):
     dic_colors={}
@@ -28,7 +30,6 @@ def formula2degrees(formula):
     From a chemical formula, return the corresponding degree sequence as a list.
     """
     splitted_formula = re.findall(r'([A-Z][a-z]*)(\d*)', formula)
-    # print(splitted_formula)
     degree_sequence = []
     for atom in splitted_formula:
         if atom[1] == '':
@@ -58,6 +59,12 @@ class Node:
         self.children = []
         self.atoms = list(atoms)
 
+    def __gt__(self, other):
+        try:
+            return max(self.atoms) > max(other.atoms)
+        except AttributeError :
+            print("Those nodes are empty...")
+
     def add_children(self, children):
         for child in children:
             if child not in self.children:
@@ -76,6 +83,7 @@ class Atom:
         self.vertex = None  # Index of this atom in general graph
         self.valence = None
         self.freeBonds = 0
+        self.leaf = None
 
     def __gt__(self, other):
         return self.freeBonds > other.freeBonds
@@ -129,32 +137,54 @@ def connect_leaves(list_of_leaves, G):
         assert leaf.is_connected(G), "Leaves are not connected!"
 
 def connect_node(node, G):  ####TODO#####"
-    free_children = node.children
-    max_child = get_max_atom_of_nodes(node.children)
-    # max_child is a tuple containing the atom with the most of free bonds
-    # and the node child containing this atom.
-    connected_children = [max_child]
-    free_children.remove(max_child[1])
-    while free_children:
-        max_connected_child = max(connected_children)
-        if max_connected_child[0].freeBonds == 0:
-            raise ValueError("Not enough free atoms.")
-        max_free_child = get_max_atom_of_nodes(free_children)
-        if max_free_child[0].freeBonds == 0:
-            raise ValueError("Not enough free atoms!")
-        connect_2_atoms(G, max_connected_child[0], max_free_child[0])
-        connected_children.append(max_free_child)
-        free_children.remove(max_free_child[1])
-
-
-
+        free_children = node.children
+        max_child = get_max_atom_of_nodes(node.children)
+        # max_child is a tuple containing the atom with the most of free bonds
+        # and the node child containing this atom.
+        connected_children = [max_child]
+        free_children.remove(max_child[1])
+        while free_children:
+            max_connected_child = max(connected_children)
+            if max_connected_child[0].freeBonds == 0:
+                raise ValueError("Not enough free atoms.")
+            max_free_child = get_max_atom_of_nodes(free_children)
+            if max_free_child[0].freeBonds == 0:
+                raise ValueError("Not enough free atoms!")
+            connect_2_atoms(G, max_connected_child[0], max_free_child[0])
+            connected_children.append(max_free_child)
+            free_children.remove(max_free_child[1])
 
 def get_max_atom_of_nodes(node_list):
     max_atoms = []
     for node in node_list:
-        max_atom = max(node.atoms, key=attrgetter('freeBonds'))
+        max_atom = max(node.atoms)
         max_atoms.append((max_atom, node))
     return max(max_atoms)
+# def connect_node(node, G):  ####TODO#####"
+#     free_children = node.children
+#     max_child = max([child for child in free_children])
+#     max_atom = max(max_child.atoms)
+#     assert isinstance(max_child, Node), "wrong type : should be an Node"
+#     assert isinstance(max_atom, Atom), "wrong type : should be a Atom"
+#     max_connected = (max_atom, max_child)
+#     # max_child is a tuple containing the atom with the most of free bonds
+#     # and the node child containing this atom.
+#     connected_children = [max_connected]
+#     free_children.remove(max_child)
+#     while free_children:
+#         max_connected_child = max(connected_children)
+#         if max_connected_child[0].freeBonds == 0:
+#             raise ValueError("Not enough free atoms.")
+#         max_free_child = max([child for child in free_children])
+#         max_free_atom = max(max_free_child.atoms)
+#         print([child for child in free_children])
+#         if max_free_atom.freeBonds == 0:
+#             raise ValueError("Not enough free atoms!")
+#         connect_2_atoms(G, max_connected_child[0], max_free_atom)
+#         connected_children.append(max_free_child)
+#         free_children.remove(max_free_child)
+
+
 
 def connect_node2(node, G):
     free_children = sorted(node.children, key=attrgetter('atoms'), reverse=True)
@@ -226,7 +256,9 @@ def generate_first_graph(tree):
         for atom in leaf.atoms:
             G.add_vertex(index)
             atom.vertex = index
+            atom.leaf = leaf
             # G.set_vertex(index, atom.valence)
+            tree.atoms[index] = atom
             index += 1
     connect_leaves(tree.leaves, G)
     for node in tree.upper_nodes:
@@ -241,6 +273,7 @@ class Fragmentation_Tree:
         self.leaves = []
         self.upper_nodes = []
         self.root = Node()
+        self.atoms = dict()
 
 
 
@@ -249,7 +282,6 @@ class Fragmentation_Tree:
         branches = self.sequence
         self.rec_set_nodes(root, branches)
         self.upper_nodes = list(reversed(self.upper_nodes))
-        # return ()
 
     def rec_set_nodes(self, node, branches):
         for branch in branches:
@@ -268,7 +300,8 @@ class Fragmentation_Tree:
                         node.atoms.append(atom)
                 node.add_children([child_node])
 
-
+    def get_atom(self, index):
+        return self.atoms[index]
 
 def build_fragmentation_tree(sequence):
     tree = Fragmentation_Tree(sequence)
@@ -363,17 +396,18 @@ def rec_generate_all_graphs(tree, G, valid_hashes, stack, valid_graphs):
     for pair in all_pairs_of_edges:
         edge1 = pair[0]
         edge2 = pair[1]
+        atom11 = tree.get_atom(edge1[0])
+        atom12 = tree.get_atom(edge1[1])
+        atom21 = tree.get_atom(edge2[0])
+        atom22 = tree.get_atom(edge2[1])
+        # edges cannot share one vertex.
         if edge1[0] in edge2 or edge1[1] in edge2:
             pass
-        # edges cannot share one vertex.
-        # elif edge1[0].valence == 1 or edge1[1].valence == 1:
-        #     if edge2[0].valence == 1 or edge2[1].valence == 1:
-        #         pass
         # # If one edge has a hydrogene, there is no need to swap with an edge
         # # also containing a hydrogene.
-        # elif edge2[0].valence == 1 or edge2[1].valence == 1:
-        #     if edge1[0].valence == 1 or edge1[1].valence == 1:
-        #         pass
+        elif atom11.valence == 1 or atom12.valence == 1:
+            if atom21.valence == 1 or atom22.valence == 1:
+                pass
         else :
             new_G1 = copy(G)
             new_G2 = copy(G)
@@ -391,35 +425,6 @@ def rec_generate_all_graphs(tree, G, valid_hashes, stack, valid_graphs):
                         valid_hashes.add(graph2hash(new_G))
                         valid_graphs.append(new_G)
     return (valid_hashes, stack, valid_graphs)
-
-# def switch_all_edges(G):
-#     all_pairs_of_edges = combinations(G.edges(), 2)
-#     valid_graphs = [G]
-#     # valid_hashes = {graph2hash(G)}
-#     # stack = {graph2hash(G)}
-#     for pair in all_pairs_of_edges:
-#         edge1 = pair[0]
-#         edge2 = pair[1]
-#         if edge1[0] in edge2 or edge1[1] in edge2:
-#             pass
-#         else :
-#             new_G1 = copy(G)
-#             new_G2 = copy(G)
-#             straight_switch(new_G1, pair[0], pair[1])
-#             crossed_switch(new_G2, pair[0], pair[1])
-#             all_nodes = leaves + upper_nodes
-#             new_G1_is_valid = True
-#             new_G2_is_valid = True
-#             for node in all_nodes:
-#                 if not node.is_connected(new_G1):
-#                     new_G1_is_valid = False
-#                 if not node.is_connected(new_G2):
-#                     new_G2_is_valid = False
-#             if new_G1_is_valid:
-#                 valid_graphs.append(new_G1)
-#             if new_G2_is_valid:
-#                 valid_graphs.append(new_G2)
-#     return valid_graphs
 
 def straight_switch(G, edge1, edge2):
     assert edge1 in G.edges(), "edge1 is not in G"
@@ -447,26 +452,52 @@ def crossed_switch(G, edge1, edge2):
     G.add_edge(v1,v4)
     G.add_edge(v2,v3)
 
+def get_LCA(atom1, atom2):
+    if atom1.leaf == atom2.leaf:
+        return atom1.leaf
+    else:
+        return rec_get_LCA(atom1.leaf, atom2.leaf)
+
+def rec_get_LCA(node1, node2):
+    if node1.parent == node2.parent:
+        return node1.parent
+    else:
+        return rec_get_LCA(node1.parent, node2.parent)
+
+
+
 def graph2hash(graph):
+    # assert isinstance(graph, str), "Wrong type : need a string"
     hash = graph.canonical_label().sparse6_string()
     return hash
 
 def hash2graph(hash):
+    assert isinstance(hash, str), "Wrong type : need a string"
     graph = Graph(hash, loops=False, multiedges=True, data_structure="sparse")
     return graph
 
 
 
-# T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
-# tree = build_fragmentation_tree(T)
-# g = generate_first_graph(tree)
-# sol = generate_all_graphs(tree)
+T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
 
 ## Real fragmentation trees
-f = formula2degrees
-x = formula2degrees('C9H16')
-y = formula2degrees('C8H9N')
+# f = formula2degrees
+# x = formula2degrees('C9H16')
+# y = formula2degrees('C8H9N')
 # T = [[[[x ,[4,2]], y], [4,2]], [2,1,1]]
-T = [[[[x,[4,2]],[y]],[[[4,2]]]], [[[[2,1,1]]]]]
+# T = [[[[x,[4,2]],[y]],[[[4,2]]]], [[[[2,1]]]]]
+# a = formula2degrees('C12H5ClN')
+# T = [[[a, [1,7]],[[4,2]]], [[[4,1,1,1]]]]
+
 tree = build_fragmentation_tree(T)
+
+
+pr = cProfile.Profile()
+pr.enable()
+
+# sol = generate_all_graphs2(tree)
 sol = generate_all_graphs(tree)
+
+pr.disable()
+pr.print_stats(sort='time')
+
