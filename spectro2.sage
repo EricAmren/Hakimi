@@ -42,22 +42,12 @@ def formula2degrees(formula):
     degree_sequence.sort(reverse=True)
     return degree_sequence
 
-    # atom = None
-    # number = ''
-    # for i in formula:
-    #     if formula[i].isalpha():
-    #         dict1[atom] = number
-    #         atom = formula[i]
-    #     if formula[i].isdigit():
-    #         number += formula[i]
-
-
-
 class Node:
     def __init__(self, atoms = {}):
         self.parent = None
         self.children = []
         self.atoms = list(atoms)
+        self.depth = None
 
     def __gt__(self, other):
         try:
@@ -77,6 +67,15 @@ class Node:
         vertices = [atom.vertex for atom in self.atoms]
         subgraph = G.subgraph(vertices)
         return subgraph.is_connected()
+
+    def rec_set_depth_of_nodes(self, depth):
+        self.depth = depth
+        depth += 1
+        try:
+            for child in self.children:
+                child.rec_set_depth_of_nodes(depth)
+        except TypeError:
+            pass
 
 class Atom:
     def __init__(self):
@@ -136,15 +135,22 @@ def connect_leaves(list_of_leaves, G):
             connected_atoms.append(max_free_atom)
         assert leaf.is_connected(G), "Leaves are not connected!"
 
-def connect_node(node, G):  ####TODO#####"
+def connect_node(node, G):  ####TODO#####
         free_children = node.children
         max_child = get_max_atom_of_nodes(node.children)
+        # print(max_child[0].valence)
         # max_child is a tuple containing the atom with the most of free bonds
         # and the node child containing this atom.
-        connected_children = [max_child]
+        connected_children = [max_child] ### Need to update this one
         free_children.remove(max_child[1])
+        # print(len(node.atoms))
+        # if len(node.atoms) == 1:
+            # print("oijoj")
         while free_children:
             max_connected_child = max(connected_children)
+            # max_connected_child = get_max_atom_of_nodes(max_connected_child[1].children)
+            if len(free_children) == 1:
+                print(max_connected_child[0].valence)
             if max_connected_child[0].freeBonds == 0:
                 raise ValueError("Not enough free atoms.")
             max_free_child = get_max_atom_of_nodes(free_children)
@@ -288,6 +294,7 @@ class Fragmentation_Tree:
             if type(branch) == sage.rings.integer.Integer:
                 new_atom = build_atom(branch)
                 node.atoms.append(new_atom)
+                new_atom.leaf = node
                 if node not in self.leaves:
                     self.leaves.append(node)
             else:
@@ -303,9 +310,27 @@ class Fragmentation_Tree:
     def get_atom(self, index):
         return self.atoms[index]
 
+    def set_depth_of_nodes(self):
+        self.root.rec_set_depth_of_nodes(0)
+
+def get_LCA(atom1, atom2):
+    if atom1.leaf == atom2.leaf:
+        return atom1.leaf
+    else:
+        node1 = atom1.leaf
+        node2 = atom2.leaf
+        return rec_get_LCA(node1, node2)
+
+def rec_get_LCA(node1, node2):
+    if node1 == node2:
+        return node1
+    else :
+        return rec_get_LCA(node1.parent, node2.parent)
+
 def build_fragmentation_tree(sequence):
     tree = Fragmentation_Tree(sequence)
     tree.set_nodes()
+    tree.set_depth_of_nodes()
     return tree
 
 
@@ -316,66 +341,6 @@ def relabel_graph(graph):
     for key, value in dict1.items():
         dict1[key] = str(key) + '-' + str(value)
     graph.relabel(dict1)
-
-
-################################ TESTING SETS ###################################
-## Set1
-# C1 = build_atom(4)
-# C2 = build_atom(4)
-# C3 = build_atom(4)
-# N1 = build_atom(3)
-# N2 = build_atom(3)
-# O1 = build_atom(2)
-# O2 = build_atom(2)
-# H1 = build_atom(1)
-# H2 = build_atom(1)
-
-# n1 = Node([C1,H1])
-# n2 = Node([N1,O1])
-# n3 = Node([C2,O2])
-# n4 = Node([C3,N2,H2])
-# G1 = Node(n1.atoms + n2.atoms)
-# G1.add_children([n1,n2])
-# G2 = Node(n3.atoms + n4.atoms)
-# G2.add_children([n3,n4])
-# root = Node(G1.atoms + G2.atoms)
-# root.add_children([G1,G2])
-# leaves = [n1,n2,n3,n4]
-# upper_nodes = [G1,G2,root]
-
-## Set2
-# C1 = build_atom(4)
-# C2 = build_atom(4)
-# N1 = build_atom(3)
-# N2 = build_atom(3)
-# N3 = build_atom(3)
-# O1 = build_atom(2)
-# O2 = build_atom(2)
-# H1 = build_atom(1)
-# H2 = build_atom(1)
-# H3 = build_atom(1)
-
-# n1 = Node({C1})
-# n2 = Node({N1})
-# n3 = Node({O1,H1})
-# n4 = Node({N2,O2})
-# n5 = Node({N3,H2})
-# n6 = Node({C2,H3})
-
-# G1 = Node(n1.atoms + n2.atoms + n3.atoms)
-# G1.add_children([n1,n2,n3])
-# G2 = Node(n4.atoms + n5.atoms)
-# G2.add_children([n4,n5])
-# G3 = Node(n6.atoms)
-# G3.add_children([n6])
-# root = Node(G1.atoms + G2.atoms + G3.atoms)
-# root.add_children([G1,G2,G3])
-# leaves = [n1,n2,n3,n4,n5,n6]
-# upper_nodes = [G1,G2,G3,root]
-
-
-# G = generate_first_graph(leaves, upper_nodes)
-# show(G)
 
 ## Second step : Generate all graphs
 
@@ -409,22 +374,81 @@ def rec_generate_all_graphs(tree, G, valid_hashes, stack, valid_graphs):
             if atom21.valence == 1 or atom22.valence == 1:
                 pass
         else :
-            new_G1 = copy(G)
-            new_G2 = copy(G)
-            straight_switch(new_G1, pair[0], pair[1])
-            crossed_switch(new_G2, pair[0], pair[1])
-            all_nodes = tree.leaves + tree.upper_nodes
-            for new_G in [new_G1, new_G2]:
-                new_G_is_valid = True
-                for node in all_nodes:
-                    if not node.is_connected(new_G):
-                        new_G_is_valid = False
-                if new_G_is_valid:
-                    if not graph2hash(new_G) in valid_hashes:
-                        stack.append(new_G)
-                        valid_hashes.add(graph2hash(new_G))
-                        valid_graphs.append(new_G)
-    return (valid_hashes, stack, valid_graphs)
+            last_common_ancestor = get_LCA_of_edges(edge1, edge2)
+            LCA1 = get_LCA(atom11, atom12)
+            LCA2 = get_LCA(atom21, atom22)
+
+            straight_switch(G, edge1, edge2)
+            if LCA1.is_connected(G) and LCA2.is_connected(G):
+                if not graph2hash(G) in valid_hashes:
+                    new_G = copy(G)
+                    stack.append(new_G)
+                    valid_hashes.add(graph2hash(new_G))
+                    valid_graphs.append(new_G)
+            reverse_straight_switch(G, edge1, edge2)
+
+            crossed_switch(G, edge1, edge2)
+            if LCA1.is_connected(G) and LCA2.is_connected(G):
+                if not graph2hash(G) in valid_hashes:
+                    new_G = copy(G)
+                    stack.append(new_G)
+                    valid_hashes.add(graph2hash(new_G))
+                    valid_graphs.append(new_G)
+            reverse_crossed_switch(G, edge1, edge2)
+
+    # return (valid_hashes, stack, valid_graphs)
+
+            # last_common_ancestor = get_LCA_of_edges(edge1, edge2)
+            # LCA1 = get_LCA(atom11, atom12)
+            # LCA2 = get_LCA(atom21, atom22)
+            # new_G1 = copy(G)
+            # new_G2 = copy(G)
+            # straight_switch(new_G1, pair[0], pair[1])
+            # crossed_switch(new_G2, pair[0], pair[1])
+            # for new_G in [new_G1, new_G2]:
+            #     if LCA1.is_connected(new_G) and LCA2.is_connected(new_G):
+            #         if not graph2hash(new_G) in valid_hashes:
+            #             stack.append(new_G)
+            #             valid_hashes.add(graph2hash(new_G))
+            #             valid_graphs.append(new_G)
+    # return (valid_hashes, stack, valid_graphs)
+            # new_G1 = copy(G)
+            # new_G2 = copy(G)
+            # straight_switch(new_G1, pair[0], pair[1])
+            # crossed_switch(new_G2, pair[0], pair[1])
+            # all_nodes = tree.leaves + tree.upper_nodes
+            # for new_G in [new_G1, new_G2]:
+            #     new_G_is_valid = True
+            #     for node in all_nodes:
+            #         if not node.is_connected(new_G):
+            #             new_G_is_valid = False
+            #     if new_G_is_valid:
+            #         if not graph2hash(new_G) in valid_hashes:
+            #             stack.append(new_G)
+            #             valid_hashes.add(graph2hash(new_G))
+            #             valid_graphs.append(new_G)
+    # return (valid_hashes, stack, valid_graphs)
+
+def get_LCA_of_edges(edge1, edge2):
+    atom11 = tree.get_atom(edge1[0])
+    atom12 = tree.get_atom(edge1[1])
+    atom21 = tree.get_atom(edge2[0])
+    atom22 = tree.get_atom(edge2[1])
+    LCA1 = get_LCA(atom11, atom12)
+    LCA2 = get_LCA(atom21, atom22)
+    while LCA1.depth != LCA2.depth:
+        if LCA1.depth < LCA2.depth:
+            LCA2 = LCA2.parent
+        else:
+            LCA1 = LCA1.parent
+        assert LCA1 != None, "Last common ancestor is none!"
+        assert LCA2 != None, "Last common ancestor is none!"
+    while LCA1 != LCA2:
+        LCA1 = LCA1.parent
+        LCA2 = LCA2.parent
+    return LCA1
+
+
 
 def straight_switch(G, edge1, edge2):
     assert edge1 in G.edges(), "edge1 is not in G"
@@ -439,6 +463,17 @@ def straight_switch(G, edge1, edge2):
     G.add_edge(v1,v3)
     G.add_edge(v2,v4)
 
+def reverse_straight_switch(G, edge1, edge2):
+    v1 = edge1[0]
+    v2 = edge1[1]
+    v3 = edge2[0]
+    v4 = edge2[1]
+    # assert v1 != v2 and v1 != v3 and v1 != v4 and v2 != v3 and v2 != v4 and v3 != v4, "edges can't share a vertex."
+    G.delete_edge((v1, v3, None))  # This may be dangerous is edge label are added...
+    G.delete_edge((v2, v4, None))
+    G.add_edge(v1,v2)
+    G.add_edge(v3,v4)
+
 def crossed_switch(G, edge1, edge2):
     assert edge1 in G.edges(), "edge1 is not in G"
     assert edge2 in G.edges(), "edge2 is not in G"
@@ -452,19 +487,15 @@ def crossed_switch(G, edge1, edge2):
     G.add_edge(v1,v4)
     G.add_edge(v2,v3)
 
-def get_LCA(atom1, atom2):
-    if atom1.leaf == atom2.leaf:
-        return atom1.leaf
-    else:
-        return rec_get_LCA(atom1.leaf, atom2.leaf)
-
-def rec_get_LCA(node1, node2):
-    if node1.parent == node2.parent:
-        return node1.parent
-    else:
-        return rec_get_LCA(node1.parent, node2.parent)
-
-
+def reverse_crossed_switch(G, edge1, edge2):
+    v1 = edge1[0]
+    v2 = edge1[1]
+    v3 = edge2[0]
+    v4 = edge2[1]
+    G.delete_edge((v1, v4, None))
+    G.delete_edge((v2, v3, None))
+    G.add_edge(v1,v2)
+    G.add_edge(v3,v4)
 
 def graph2hash(graph):
     # assert isinstance(graph, str), "Wrong type : need a string"
@@ -478,10 +509,12 @@ def hash2graph(hash):
 
 
 
-T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
+# T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
 
+# T1 = [[[4,1],[3,2]],[[4,2],[4,3,1]]]
+# T2 = [[[4],[3,2]],[[4,2],[4,3]],[1],[1]]
 ## Real fragmentation trees
-# f = formula2degrees
+f = formula2degrees
 # x = formula2degrees('C9H16')
 # y = formula2degrees('C8H9N')
 # T = [[[[x ,[4,2]], y], [4,2]], [2,1,1]]
@@ -489,14 +522,34 @@ T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
 # a = formula2degrees('C12H5ClN')
 # T = [[[a, [1,7]],[[4,2]]], [[[4,1,1,1]]]]
 
+# a = f('C9H17')
+# b = f('C8H9N')
+# T = [[[[a,[4,2]],[b]], [[[4,2]]]], [[[[2,1]]]]]
+
+# a = f('C2H2O2')
+# b = f('CH4N')
+# c = f('CH2N2')
+# T = [[a,b], [c]]
+
+# h = [[[1]]]
+# a = f('C2O2')
+# b = f('CN')
+# c = f('CN2')
+# T = [[a,b], [c], h,h,h,h,h,h,h,h,h]
+
+T = [[4,2],[1],[1],[1],[1]]
+
+# tree1 = build_fragmentation_tree(T1)
+# tree2 = build_fragmentation_tree(T2)
 tree = build_fragmentation_tree(T)
 
 
 pr = cProfile.Profile()
 pr.enable()
 
-# sol = generate_all_graphs2(tree)
 sol = generate_all_graphs(tree)
+# sol1 = generate_all_graphs(tree1)
+# sol2 = generate_all_graphs(tree2)
 
 pr.disable()
 pr.print_stats(sort='time')
