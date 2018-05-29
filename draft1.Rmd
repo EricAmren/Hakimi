@@ -1,0 +1,87 @@
+---
+title: "rapport_stage"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Méthodes : 
+
+Modélisation d'une molécule sous forme de graphe:
+Soit la formule chimique associée à une molécule. D'après un arbre de fragmentation, nous pouvons associer à chaque noeud un fragment de la molécule. Ce noeud représente un ensemble d'atome dont la connexité a été conservée après fragmentation : nous faisons pour l'instant le choix de ne pas prendre en compte les potentiels réarrangements. [Note : c'est une hypothèse évidemment trop simpliste, nous reviendrons dessus plus tard.]
+D'après les propriétés de valence des atomes, il est ainsi possible de modéliser un atome comme étant un sommet du graphe, nécessitant d'être connecté par un nombre précis d'arêtes correspondant à sa valence. Le degré de chaque sommet du graphe devra correspondre exactement à la valence de l'atome auquel il est associé.
+
+[Insérer graphe exemple]
+
+Par extension, à une formule chimique correspond une séquence de degré.
+
+
+[Insérer graphe exemple]
+
+Chaque noeud de l'arbre de fragmentation apporte ainsi des contraintes de connexité supplémentaires à tous les atomes qui le compose.
+Nous pouvons nous représenter cet arbre de fragmentation comme un supergraphe, connecté, composé de graphes connectés correspondant aux noeuds enfant de la racine de l'arbre, eux-même composés de sous-graphes connexes associés aux petits-enfants de la racine; et cela jusqu'à ce que l'on atteigne les feuilles de l'arbre.
+
+[Big schéma d'une patate-matriochka]
+
+Modéliser d'une telle manière l'arbre de fragmentation permet de poser le problème visuellement et de déduire les règles de connexion que devront respecter chaque noeud de l'arbre.
+
+## Stratégie adoptée :
+
+Rappel : l'objectif est d'énumérer toutes les configurations structurelles possible qu'une molécule puisse prendre tout en respectant un arbre de fragmentation.
+D'après [papier], il a été démontré qu'à partir de n'importe quel graphe respectant un arbre de fragmentation, il est possible de reconstruire le supergraphe composé de tous les graphes répondant à ces contraintes de séquence de degré grâce à une opération appelée le switch (ou le swap, plusieurs dénominations existent dans la littérature).
+
+Un point sur le switch :
+Le switch est tout simplement l'opération consistant, étant deux arêtes d'un graphe, à en intervertir deux sommets, nous redonnant au final deux nouvelles arêtes.
+Deux switches différents peuvent être appliqués sur un jeu de deux arêtes :
+[Schéma switch : straight/crossed]
+Cette opération a la propriété de ne pas modifier la séquence de degré du graphe dont sont issues les arêtes.
+
+En appliquant toutes les opérations de switch possible au sein d'un graphe (c-a-d, sur chaque paire d'arêtes), nous pouvons énumérer tous les graphes répondant aux contraintes de l'arbre de fragmentation : le supergraphe obtenu se compose en effet de chacun de ces graphes, reliés par l'opération de switch qui nous a permis de passer de l'un à l'autre.
+[Schéma du supergraphe]
+Plus précisément, ce supergraphe se compose de tous les graphes respectant les contraintes imposées par une séquence de degré : il contient également tous les graphes non-connexes. Cependant, d'après [papier ?], il a été démontré que le supergraphe ne perdait pas sa propriété de connexité lorsque sont retirés les sous-graphes non connexes. Ainsi, quelque soit le graphe (connexe) de départ du supergraphe, il existera toujours un chemin (correspondant à une suite de switches) le reliant à n'importe quel autre graphe connexe.
+ [schéma ?]
+ 
+Cela nous permet d'affirmer qu'à partir d'un seul graphe valide, nous pouvons en déduire toutes les solutions existantes pour une séquence de degré.
+
+Il faudra ensuite faire un tri pour ne conserver que les graphes respectant également les conditions de connexité induites par chaque noeud de l'arbre de fragmentation (à savoir que chaque ensemble de sommet d'un noeud doit être connexe).
+
+## Génération du premier graphe respectant l'arbre de fragmentation :
+Apparté :
+Soit une molécule composée de n atomes.
+Soit sum(di) la somme de la séquence de degré correspondante.
+Le nombre d'arêtes du graphe représentant cette molécule est égal à sum(di)/2. -> nb_e_tot
+Le nombre d'arêtes minimum pour obtenir un graphe connexe est égal à (n-1). -> nb_e_min
+Combien peut-on construire de graphe connexe non-isomorphe avec seulement (n-1) arêtes?
+Le nombre d'arête a ajouter une fois avoir obtenu ce graphe connexe est de sum(di/2) - (n-1). -> nb_e_to_add
+
+Exemple : C2N3O2H3
+sum(di) = 24
+nb_e_tot = sum(di)/2 = 12
+nb_e_min = nb_atom -1 = 9
+nb_e_to_add = nb_e_tot - nb_e_min = 3
+?? D'après nauty (geng -c 9 10:10 -u), 797 graphes simples connexes et non-isomorphes existent pour nb_e_min = 9 arètes pour 10 sommets.
+
+
+
+
+
+### Validité de l'arbre de fragmentation et de la séquence de degré
+La procédure à suivre pour obtenir ce premier graphe doit être particulièrement rigoureuse si nous voulons qu'elle soit adaptée quelque soit la composition de la molécule et son arbre de fragmentation.
+
+Dans un premier temps, précisons qu'il est possible de vérifier au préalable qu'une solution existe réellement.
+Pour cela, ... respect des 3 conditions ... 
+Si ces conditions sont respectées alors d'après [papier], il a été démontré qu'au moins une solution existe pour ce problème.
+
+Pour trouver ce premier graphe, il est ensuite nécessaire, après avoir généré un sommet par atome, d'ajouter le bon nombre d'arête de telle sorte que chaque sommet atteigne exactement le degré imposé par la séquence de degré déduite de la formule chimique.
+
+### Connexion des feuilles
+Un des premières difficultés pouvant être rencontrée lors de la génération du premier graphe concerne la gestion des sommets nécessitant un grand nombre de degré.
+En effet, si la distribution des arêtes entre les sommets n'est faite correctement, il est possible que certaines
+ 
+
+
+
+Etant donné la formule chimique d'uune molécule, il est possible de lui associer
+une séquence de degré. En effet, si 
