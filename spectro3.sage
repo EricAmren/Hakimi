@@ -394,6 +394,8 @@ def rec_generate_all_graphs(tree, G, valid_hashes, stack):
     for pair in all_pairs_of_edges:
         edge1 = pair[0]
         edge2 = pair[1]
+        if edge1 == edge2:
+            pass
         atom11 = tree.get_atom(edge1[0])
         atom12 = tree.get_atom(edge1[1])
         atom21 = tree.get_atom(edge2[0])
