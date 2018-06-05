@@ -50,11 +50,15 @@ class Node:
         except AttributeError :
             print("Those nodes are empty...")
 
+    def __repr__(self):
+        return str([atom.valence for atom in self.atoms])
+
     def add_children(self, children):
         for child in children:
             if child not in self.children:
                 self.children.append(child)
                 child.parent = self
+
     def is_root(self):
         return self.parent == None
 
@@ -81,6 +85,9 @@ class Atom:
 
     def __gt__(self, other):
         return self.freeBonds > other.freeBonds
+
+    def __repr__(self):
+        return self.valence
 
 def build_atom(valence):
     atom = Atom()
@@ -136,24 +143,24 @@ def get_max_atom_of_nodes(node_list):
     return max(max_atoms)
 
 
-def connect_node2(node, G):
-    free_children = sorted(node.children, key=attrgetter('atoms'), reverse=True)
-    max_child = free_children.pop(0)
-    connected_children = [max_child]
+# def connect_node2(node, G):
+#     free_children = sorted(node.children, key=attrgetter('atoms'), reverse=True)
+#     max_child = free_children.pop(0)
+#     connected_children = [max_child]
 
-    while free_children:
-        max_connected_child = max(connected_children, key=attrgetter('atoms'))
-        if max(max_connected_child.atoms).freeBonds == 0:
-            raise ValueError("Not enough free atoms.")
-        max_free_child = free_children.pop(0)
-        try:
-            connect_2_atoms(G, max(max_connected_child.atoms), max(max_free_child.atoms))
-        except AssertionError:
-            print("Error in connect_node")
-            print(max(max_connected_child.atoms).valence, max(max_free_child.atoms).valence)
-            print(len(node.children[0].children[0].children[0].children[0].children))
-            exit(0)
-        connected_children.append(max_free_child)
+#     while free_children:
+#         max_connected_child = max(connected_children, key=attrgetter('atoms'))
+#         if max(max_connected_child.atoms).freeBonds == 0:
+#             raise ValueError("Not enough free atoms.")
+#         max_free_child = free_children.pop(0)
+#         try:
+#             connect_2_atoms(G, max(max_connected_child.atoms), max(max_free_child.atoms))
+#         except AssertionError:
+#             print("Error in connect_node")
+#             print(max(max_connected_child.atoms).valence, max(max_free_child.atoms).valence)
+#             print(len(node.children[0].children[0].children[0].children[0].children))
+#             exit(0)
+#         connected_children.append(max_free_child)
 
 def fill_remaining_bonds(root,G):
     unfilled_atoms = []
@@ -240,6 +247,7 @@ def rec_get_LCA(node1, node2):
         return node1
     else :
         if node1.parent == None:
+            print(node1)
             print("is this root?")
             exit(0)
         if node1 == None:
@@ -278,44 +286,49 @@ def generate_all_graphs(tree):
 
 def rec_generate_all_graphs(tree, G, valid_hashes, stack):
     all_pairs_of_edges = combinations(G.edges(), 2)
-    for pair in all_pairs_of_edges:
-        edge1 = pair[0]
-        edge2 = pair[1]
-        if edge1 == edge2:
-            pass
-        atom11 = tree.get_atom(edge1[0])
-        atom12 = tree.get_atom(edge1[1])
-        atom21 = tree.get_atom(edge2[0])
-        atom22 = tree.get_atom(edge2[1])
-        # edges cannot share one vertex.
-        if edge1[0] in edge2 or edge1[1] in edge2:
-            pass
-        # # If one edge has a hydrogene, there is no need to swap with an edge
-        # # also containing a hydrogene.
-        elif (atom11.valence == 1 or atom12.valence == 1) and (atom21.valence == 1 or atom22.valence == 1):
-            pass
-        else :
-            last_common_ancestor = get_LCA_of_edges(tree, edge1, edge2)
-            LCA1 = get_LCA(atom11, atom12)
-            LCA2 = get_LCA(atom21, atom22)
+    with open("./graphs_creatine.txt", "a+") as f:
+        f.write(graph2hash(G))
+        f.write("\n")
+        for pair in all_pairs_of_edges:
+            edge1 = pair[0]
+            edge2 = pair[1]
+            if edge1 == edge2:
+                pass
+            atom11 = tree.get_atom(edge1[0])
+            atom12 = tree.get_atom(edge1[1])
+            atom21 = tree.get_atom(edge2[0])
+            atom22 = tree.get_atom(edge2[1])
+            # edges cannot share one vertex.
+            if edge1[0] in edge2 or edge1[1] in edge2:
+                pass
+            # # If one edge has a hydrogene, there is no need to swap with an edge
+            # # also containing a hydrogene.
+            elif (atom11.valence == 1 or atom12.valence == 1) and (atom21.valence == 1 or atom22.valence == 1):
+                pass
+            else :
+                last_common_ancestor = get_LCA_of_edges(tree, edge1, edge2)
+                LCA1 = get_LCA(atom11, atom12)
+                LCA2 = get_LCA(atom21, atom22)
 
-            straight_switch(G, edge1, edge2)
-            if LCA1.is_connected(G) and LCA2.is_connected(G):
-                if not graph2hash(G) in valid_hashes:
-                    new_G = copy(G)
-                    stack.append(new_G)
-                    valid_hashes.add(graph2hash(new_G))
-                    # valid_graphs.append(new_G)
-            reverse_straight_switch(G, edge1, edge2)
+                straight_switch(G, edge1, edge2)
+                if LCA1.is_connected(G) and LCA2.is_connected(G):
+                    if not graph2hash(G) in valid_hashes:
+                        new_G = copy(G)
+                        stack.append(new_G)
+                        valid_hashes.add(graph2hash(new_G))
+                        # valid_graphs.append(new_G)
+                reverse_straight_switch(G, edge1, edge2)
 
-            crossed_switch(G, edge1, edge2)
-            if LCA1.is_connected(G) and LCA2.is_connected(G):
-                if not graph2hash(G) in valid_hashes:
-                    new_G = copy(G)
-                    stack.append(new_G)
-                    valid_hashes.add(graph2hash(new_G))
-                    # valid_graphs.append(new_G)
-            reverse_crossed_switch(G, edge1, edge2)
+                crossed_switch(G, edge1, edge2)
+                if LCA1.is_connected(G) and LCA2.is_connected(G):
+                    if not graph2hash(G) in valid_hashes:
+                        new_G = copy(G)
+                        stack.append(new_G)
+                        valid_hashes.add(graph2hash(new_G))
+                        f.write(graph2hash(new_G))
+                        f.write("\n")
+                        # valid_graphs.append(new_G)
+                reverse_crossed_switch(G, edge1, edge2)
 
 def get_LCA_of_edges(tree, edge1, edge2):
     atom11 = tree.get_atom(edge1[0])
@@ -394,8 +407,13 @@ def hash2graph(hash):
     return graph
 
 
+def write_result_in_file(hashes, filename):
+    with open (filename, w) as f:
+        f.write(hashes)
+
 
 # T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
+# T = [[[4],[3],[2,1]],[[3,2],[3,1]],[4,1]]
 
 # T = [[[4,1],[3,2]],[[4,2],[4,3,1]]]
 # T = [[[4],[3,2]],[[4,2],[4,3]],[1],[1]]
@@ -417,6 +435,7 @@ f = formula2degrees
 # c = f('CH2N2')
 # T = [[a,b], [c]]
 
+# Creatine real hash: ':Qa@jIaA_?JgHKkbCDNeFLN'
 h = [[1]]
 a = f('C2O2')
 b = f('CN')
@@ -430,12 +449,12 @@ T = [[a,b], [c], h,h,h,h,h,h,h,h,h]
 tree = build_fragmentation_tree(T)
 
 
-pr = cProfile.Profile()
-pr.enable()
+# pr = cProfile.Profile()
+# pr.enable()
 
 sol = generate_all_graphs(tree)
 # sol1 = generate_all_graphs(tree1)
 # sol2 = generate_all_graphs(tree2)
 
-pr.disable()
-pr.print_stats(sort='time')
+# pr.disable()
+# pr.print_stats(sort='time')

@@ -1,0 +1,18 @@
+Méthodes : 
+
+Modélisation d'une molécule sous forme de graphe:
+Soit la formule chimique associée à une molécule. D'après un arbre de
+fragmentation, nous pouvons associer à chaque noeud un fragment de la molécule.
+Ce noeud représente un ensemble d'atome dont la connexité a été conservée après
+fragmentation : nous faisons pour l'instant le choix de ne pas prendre en compte
+les potentiels réarrangements.
+D'après les propriétés de valence des atomes, il est ainsi possible de modéliser
+un atome comme étant un sommet du graphe, nécessitant d'être connecté par un
+nombre précis d'arêtes corresponsance à sa valence.
+[Insérer graphe exemple]
+
+A une formule chimique est associée un 
+A partir de sa formule chimique, il est trivial d'en déduir
+
+Etant donné la formule chimique d'uune molécule, il est possible de lui associer
+une séquence de degré. En effet, si 

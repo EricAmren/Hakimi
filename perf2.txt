@@ -1,0 +1,133 @@
+Avan modif : Stack est toujours une liste, pas de unvalid_hash
+
+37470
+         3053451332 function calls (3021562172 primitive calls) in 2509.839 seconds
+
+   Ordered by: internal time
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+ 13651931  200.142    0.000  642.298    0.000 graph.py:911(__init__)
+ 10416979  169.648    0.000  265.774    0.000 generic_graph.py:10426(add_edges)
+  2198733  153.865    0.000  153.865    0.000 {sage.groups.perm_gps.partn_ref.refinement_graphs.search_tree}
+283142321  142.892    0.000  142.892    0.000 {method 'add_edge' of 'sage.graphs.base.sparse_graph.SparseGraphBackend' objects}
+  2198733  110.305    0.000  188.439    0.000 graph.py:1331(sparse6_string)
+ 11335594  102.674    0.000  135.478    0.000 generic_graph.py:11131(edges)
+  2198733  102.543    0.000  968.302    0.000 generic_graph.py:21815(canonical_label)
+  5433684   97.949    0.000  183.149    0.000 generic_graph.py:2549(has_multiple_edges)
+ 10416979   79.451    0.000  687.561    0.000 generic_graph.py:846(copy)
+ 76042612   74.594    0.000   87.669    0.000 generic_graph.py:16986(depth_first_search)
+176810226   74.573    0.000  104.061    0.000 generic_graph.py:9694(has_vertex)
+  1036218   72.976    0.000  201.169    0.000 generic_graph.py:22398(graph_isom_equivalent_non_edge_labeled_graph)
+  8180777   65.422    0.000  749.315    0.000 generic_graph.py:12156(_subgraph_by_deleting)
+  8180777   48.911    0.000  155.621    0.000 generic_graph.py:5066(is_connected)
+ 81726767   48.382    0.000   90.294    0.000 generic_graph.py:11292(edge_iterator)
+17187546/6132344   43.562    0.000   43.562    0.000 <string>:352(rec_get_LCA)
+ 13534327   41.686    0.000   46.437    0.000 {method 'sort' of 'list' objects}
+126926315   40.904    0.000   40.904    0.000 {getattr}
+ 12615712   39.804    0.000   39.804    0.000 {method 'add_vertices' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+    37470   39.553    0.001 2509.048    0.067 <string>:393(rec_generate_all_graphs)
+  2198733   37.991    0.000   78.407    0.000 generic_graph.py:20576(relabel)
+37873369/17039411   34.306    0.000  723.322    0.000 copy.py:66(copy)
+  8180777   30.066    0.000  105.929    0.000 generic_graph.py:9663(delete_vertices)
+  8180777   29.902    0.000   29.902    0.000 {method 'del_vertices' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+ 61264422   28.710    0.000   53.510    0.000 generic_graph.py:2854(name)
+ 50318285   28.227    0.000   28.227    0.000 {sorted}
+  8180777   25.842    0.000  794.893    0.000 generic_graph.py:11835(subgraph)
+  2198733   24.299    0.000 1181.040    0.001 <string>:534(graph2hash)
+ 18509129   23.989    0.000   23.989    0.000 {method 'set_edge_label' of 'sage.graphs.base.sparse_graph.SparseGraphBackend' objects}
+ 66623169   23.924    0.000   23.924    0.000 {hasattr}
+ 23775261   23.321    0.000   23.321    0.000 {method 'del_edge' of 'sage.graphs.base.sparse_graph.SparseGraphBackend' objects}
+  8180777   23.174    0.000  973.688    0.000 <string>:67(is_connected)
+ 11298124   22.423    0.000   65.985    0.000 <string>:344(get_LCA)
+  6469902   20.731    0.000   36.194    0.000 generic_graph.py:10146(vertices)
+339093526   19.870    0.000   19.870    0.000 {len}
+168629449   17.446    0.000   17.446    0.000 {method 'has_vertex' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+ 60228203   16.729    0.000   42.669    0.000 generic_graph.py:830(is_immutable)
+  2824531   16.138    0.000   53.149    0.000 <string>:466(get_LCA_of_edges)
+ 44827659   14.984    0.000   14.984    0.000 {sage.graphs.generic_graph_pyx.int_to_binary_string}
+ 41095662   14.923    0.000   46.183    0.000 generic_graph.py:10354(add_edge)
+ 64275114   14.401    0.000   14.401    0.000 {isinstance}
+216387420   13.933    0.000   13.933    0.000 {hash}
+ 40880852   13.728    0.000   20.521    0.000 generic_graph.py:10066(vertex_iterator)
+ 23775261   12.903    0.000   36.224    0.000 generic_graph.py:10672(delete_edge)
+ 13651931   12.686    0.000   19.176    0.000 generic_graph.py:2684(allow_multiple_edges)
+  2824531   11.010    0.000   90.550    0.000 <string>:487(straight_switch)
+  2824531   10.807    0.000   88.948    0.000 <string>:511(crossed_switch)
+ 83799203   10.331    0.000   10.331    0.000 {method 'iterator_edges' of 'sage.graphs.base.sparse_graph.SparseGraphBackend' objects}
+ 30691341   10.144    0.000   12.767    0.000 generic_graph.py:2640(allows_multiple_edges)
+ 29849718    9.913    0.000   12.657    0.000 generic_graph.py:3275(order)
+  8180777    9.188    0.000    9.188    0.000 {method 'depth_first_search' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+128726723    8.074    0.000    8.074    0.000 {method 'add' of 'set' objects}
+  2198733    7.326    0.000    7.326    0.000 {method 'relabel' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+ 10416979    6.885    0.000  694.445    0.000 generic_graph.py:1105(__copy__)
+ 40880852    6.792    0.000    6.792    0.000 {method 'iterator_verts' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+ 15850663    6.654    0.000    8.347    0.000 generic_graph.py:2330(allows_loops)
+ 13651931    6.632    0.000    7.980    0.000 generic_graph.py:2374(allow_loops)
+ 19688142    6.380    0.000   11.740    0.000 generic_graph.py:11098(has_edge)
+  2824531    6.131    0.000   21.789    0.000 <string>:500(reverse_straight_switch)
+ 36927604    6.096    0.000    6.096    0.000 <string>:338(get_atom)
+  2824531    6.044    0.000   21.660    0.000 <string>:524(reverse_crossed_switch)
+ 37873369    5.705    0.000    5.705    0.000 {method 'get' of 'dict' objects}
+  8180777    5.403    0.000    5.403    0.000 {method 'is_connected' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+ 19688142    5.360    0.000    5.360    0.000 {method 'has_edge' of 'sage.graphs.base.sparse_graph.SparseGraphBackend' objects}
+ 10416979    4.819    0.000    4.819    0.000 generic_graph.py:2991(weighted)
+ 41775927    4.751    0.000    4.751    0.000 graph.py:1379(<lambda>)
+ 44827659    4.695    0.000    4.695    0.000 {chr}
+ 12615712    4.523    0.000   44.327    0.000 generic_graph.py:9569(add_vertices)
+ 13651931    4.478    0.000    4.478    0.000 generic_graph.py:343(__init__)
+ 44343272    3.854    0.000    3.854    0.000 {method 'multiple_edges' of 'sage.graphs.base.sparse_graph.SparseGraphBackend' objects}
+  2198733    3.627    0.000    3.627    0.000 graph.py:1377(<dictcomp>)
+  2198733    3.252    0.000  157.631    0.000 decorators.py:712(wrapper)
+  3387480    3.191    0.000    3.191    0.000 copy.py:113(_copy_with_constructor)
+ 29502594    3.042    0.000    3.042    0.000 {method 'loops' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+ 29849718    2.744    0.000    2.744    0.000 {method 'num_verts' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+ 24068910    2.605    0.000    2.605    0.000 copy.py:101(_copy_immutable)
+ 16464447    2.529    0.000    2.529    0.000 {method 'pop' of 'list' objects}
+ 10416979    2.505    0.000    2.505    0.000 generic_graph.py:2896(get_pos)
+  8180777    2.372    0.000    2.372    0.000 {next}
+ 19688142    2.138    0.000    2.138    0.000 generic_graph.py:22520(<genexpr>)
+ 13651931    1.793    0.000    1.793    0.000 {sage.structure.element.is_Matrix}
+  8180777    1.587    0.000    1.587    0.000 generic_graph.py:10734(delete_edges)
+  2198733    1.454    0.000    1.454    0.000 {sum}
+  1188747    1.169    0.000    1.169    0.000 {method 'get_edge_label' of 'sage.graphs.base.sparse_graph.SparseGraphBackend' objects}
+  2198733    1.058    0.000    1.058    0.000 {method 'nbits' of 'sage.rings.integer.Integer' objects}
+  1162523    1.054    0.000    1.242    0.000 __init__.py:23(find_module)
+  2198733    1.034    0.000    2.227    0.000 generic_graph.py:2282(has_loops)
+  1188747    0.949    0.000    4.573    0.000 generic_graph.py:11009(set_edge_label)
+  2325046    0.943    0.000    0.943    0.000 six.py:184(find_module)
+  2198733    0.897    0.000    0.897    0.000 {sage.graphs.generic_graph_pyx.small_integer_to_graph6}
+  2198733    0.869    0.000    0.869    0.000 {method 'values' of 'dict' objects}
+        1    0.607    0.607 2509.839 2509.839 <string>:381(generate_all_graphs)
+  2198733    0.514    0.000    0.514    0.000 {method 'items' of 'dict' objects}
+  4325294    0.456    0.000    0.456    0.000 {method 'append' of 'list' objects}
+  1188747    0.439    0.000    1.608    0.000 generic_graph.py:11400(edge_label)
+  2198733    0.347    0.000    0.347    0.000 {method 'c_graph' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+  1162523    0.188    0.000    0.188    0.000 {method 'partition' of 'str' objects}
+      175    0.000    0.000    0.000    0.000 {max}
+        1    0.000    0.000    0.001    0.001 <string>:123(connect_leaves)
+       34    0.000    0.000    0.000    0.000 <string>:191(get_max_atom_of_nodes)
+        1    0.000    0.000    0.057    0.057 <string>:286(generate_first_graph)
+      188    0.000    0.000    0.000    0.000 <string>:88(__gt__)
+       12    0.000    0.000    0.000    0.000 <string>:139(connect_node)
+       19    0.000    0.000    0.000    0.000 <string>:97(connect_2_atoms)
+        1    0.000    0.000    0.000    0.000 {dir}
+        3    0.000    0.000    0.000    0.000 abc.py:105(register)
+       18    0.000    0.000    0.000    0.000 {method 'add_vertex' of 'sage.graphs.base.c_graph.CGraphBackend' objects}
+        1    0.000    0.000    0.000    0.000 decorators.py:38(sage_wraps)
+        1    0.000    0.000    0.000    0.000 <string>:1(<module>)
+        1    0.000    0.000    0.000    0.000 decorators.py:160(f)
+        3    0.000    0.000    0.000    0.000 _weakrefset.py:70(__contains__)
+        1    0.000    0.000    0.000    0.000 <string>:271(fill_remaining_bonds)
+        1    0.000    0.000    0.000    0.000 functools.py:17(update_wrapper)
+       23    0.000    0.000    0.000    0.000 {method 'remove' of 'list' objects}
+        3    0.000    0.000    0.000    0.000 abc.py:148(__subclasscheck__)
+        3    0.000    0.000    0.000    0.000 {issubclass}
+       18    0.000    0.000    0.000    0.000 generic_graph.py:9534(add_vertex)
+        1    0.000    0.000    0.000    0.000 decorators.py:675(__call__)
+        3    0.000    0.000    0.000    0.000 {setattr}
+        1    0.000    0.000    0.000    0.000 decorators.py:641(__init__)
+        2    0.000    0.000    0.000    0.000 vt100_input.py:275(_input_parser_generator)
+        1    0.000    0.000    0.000    0.000 {method 'intersection' of 'set' objects}
+        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}
+        1    0.000    0.000    0.000    0.000 {method 'update' of 'dict' objects}
+
