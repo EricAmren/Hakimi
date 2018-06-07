@@ -202,8 +202,6 @@ class Fragmentation_Tree:
         self.root = Node()
         self.atoms = dict()
 
-
-
     def set_nodes(self):
         root = self.root
         branches = self.sequence
@@ -407,10 +405,6 @@ def hash2graph(hash):
     return graph
 
 
-def write_result_in_file(hashes, filename):
-    with open (filename, w) as f:
-        f.write(hashes)
-
 
 # T = [[[4],[3],[2,1]],[[3,2],[3,1]],[[4,1]]]
 # T = [[[4],[3],[2,1]],[[3,2],[3,1]],[4,1]]
@@ -436,23 +430,23 @@ f = formula2degrees
 # T = [[a,b], [c]]
 
 # Creatine real hash: ':Qa@jIaA_?JgHKkbCDNeFLN'
-h = [[1]]
-a = f('C2O2')
-b = f('CN')
-c = f('CN2')
-T = [[a,b], [c], h,h,h,h,h,h,h,h,h]
+# h = [[1]]
+# a = f('C2O2')
+# b = f('CN')
+# c = f('CN2')
+# T = [[a,b], [c], h,h,h,h,h,h,h,h,h]
 
 # T = [[4,2],[1],[1],[1],[1]]
 
 # tree1 = build_fragmentation_tree(T1)
 # tree2 = build_fragmentation_tree(T2)
-tree = build_fragmentation_tree(T)
+# tree = build_fragmentation_tree(T)
 
 
 # pr = cProfile.Profile()
 # pr.enable()
 
-sol = generate_all_graphs(tree)
+# sol = generate_all_graphs(tree)
 # sol1 = generate_all_graphs(tree1)
 # sol2 = generate_all_graphs(tree2)
 
